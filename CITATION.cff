@@ -1,0 +1,8 @@
+cff-version: 0.1.0
+message: If you use this software, please cite it as below.
+authors:
+  - family-names: Popov
+    given-names: Ilia
+title: "KrakenParser"
+date-released: 2025-02-16
+url: https://github.com/PopovIILab/KrakenParser
