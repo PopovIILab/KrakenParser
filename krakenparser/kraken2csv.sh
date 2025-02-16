@@ -22,7 +22,7 @@ MPA_DIR="$PARENT_DIR/mpa"
 # PART 2: COMBINING MPAs
 
 COMBINED_FILE="$PARENT_DIR/COMBINED.txt"
-python KrakenTools/combine_mpa.py -i "$MPA_DIR"/* -o "$COMBINED_FILE"
+python "$SCRIPT_DIR/combine_mpa.py" -i "$MPA_DIR"/* -o "$COMBINED_FILE"
 if [ $? -ne 0 ]; then
     echo "Error: Failed to run combine_mpa.py"
     exit 1

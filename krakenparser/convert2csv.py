@@ -1,5 +1,7 @@
 import sys
 import pandas as pd
+import shutil
+from pathlib import Path
 
 def convert_to_csv(input_file, output_file):
     # Read the entire file into a DataFrame
@@ -17,6 +19,14 @@ def convert_to_csv(input_file, output_file):
     # Save the transposed data to a new CSV file
     data_transposed.to_csv(output_file, index_label='Sample_id')
     print(f"Data has been successfully converted and saved as '{output_file}'.")
+
+    # Get the path to the current directory (same location as the script)
+    current_dir = Path(__file__).resolve().parent
+    pycache_dir = current_dir / "__pycache__"
+
+    # Check if __pycache__ exists and remove it
+    if pycache_dir.exists() and pycache_dir.is_dir():
+        shutil.rmtree(pycache_dir)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

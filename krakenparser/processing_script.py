@@ -1,4 +1,6 @@
 import sys
+import shutil
+from pathlib import Path
 
 def modify_species_names(line):
     prefixes = ['s__', 'g__', 'f__', 'o__', 'c__', 'p__']
@@ -25,6 +27,14 @@ def process_files(source_file, destination_file):
     # Write the updated content back to the destination file
     with open(destination_file, 'w') as file:
         file.write(updated_content)
+
+    # Get the path to the current directory (same location as the script)
+    current_dir = Path(__file__).resolve().parent
+    pycache_dir = current_dir / "__pycache__"
+
+    # Check if __pycache__ exists and remove it
+    if pycache_dir.exists() and pycache_dir.is_dir():
+        shutil.rmtree(pycache_dir)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

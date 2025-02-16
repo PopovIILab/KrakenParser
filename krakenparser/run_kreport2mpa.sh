@@ -6,6 +6,9 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
+# Determine the directory of this script
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
 # Setting the path to the source file directory and destination directory
 SOURCE_DIR=$1
 DESTINATION_DIR=$2
@@ -18,7 +21,7 @@ for file in "${SOURCE_DIR}"/*.*; do
     # Getting file name without path
     filename=$(basename "${file}")
     # Forming a command to process a file
-    python KrakenTools/kreport2mpa.py -r "${file}" -o "${DESTINATION_DIR}/${filename/.kreport/.MPA.TXT}" --display-header
+    python "$SCRIPT_DIR/kreport2mpa.py" -r "${file}" -o "${DESTINATION_DIR}/${filename/.kreport/.MPA.TXT}" --display-header
 done
 
 if [ $? -ne 0 ]; then
