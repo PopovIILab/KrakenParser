@@ -233,7 +233,7 @@ data/
 ```
 
 ## Conclusion
-Kraken2CSV provides a **simple and automated** way to convert Kraken2 reports into usable CSV files for downstream analysis. You can run the **full pipeline** with a single command or use **individual scripts** as needed.
+KrakenParser provides a **simple and automated** way to convert Kraken2 reports into usable CSV files for downstream analysis. You can run the **full pipeline** with a single command or use **individual scripts** as needed.
 
 For any issues or feature requests, feel free to open an issue on GitHub!
 
