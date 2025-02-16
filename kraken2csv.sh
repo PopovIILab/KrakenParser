@@ -14,7 +14,7 @@ PARENT_DIR=$(dirname "$SOURCE_DIR")
 MPA_DIR="$PARENT_DIR/mpa"
 
 # Run the old script with the correct paths
-./scripts/run_kreport2mpa.sh "$SOURCE_DIR" "$MPA_DIR"
+./KrakenParser/run_kreport2mpa.sh "$SOURCE_DIR" "$MPA_DIR"
 
 # PART 2: COMBINING MPAs
 
@@ -30,17 +30,12 @@ echo "MPA files combined successfully. Output stored in $COMBINED_FILE"
 
 COUNTS_DIR="$PARENT_DIR/counts"
 
-# Create the destination directory if it doesn't exist
-mkdir -p "$COUNTS_DIR"
-mkdir -p "${COUNTS_DIR}"/txt
-mkdir -p "${COUNTS_DIR}"/csv
-
-./scripts/decombine.sh "$COMBINED_FILE" "$COUNTS_DIR"
+./KrakenParser/decombine.sh "$COMBINED_FILE" "$COUNTS_DIR"
 
 # PART 4: PROCESS COUNTS TXT FILES
 
 for file in "$COUNTS_DIR"/txt/counts_*.txt; do
-    python scripts/processing_script.py "$COMBINED_FILE" "$file"
+    python KrakenParser/processing_script.py "$COMBINED_FILE" "$file"
     if [ $? -ne 0 ]; then
         echo "Error: Failed to process $file"
         exit 1
@@ -52,7 +47,7 @@ done
 
 for file in "$COUNTS_DIR"/txt/counts_*.txt; do
     CSV_FILE="$COUNTS_DIR/csv/$(basename "$file" .txt).csv"
-    python scripts/convert2csv.py "$file" "$CSV_FILE"
+    python KrakenParser/convert2csv.py "$file" "$CSV_FILE"
 done
 
 echo "All steps completed successfully!"
