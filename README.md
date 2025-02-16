@@ -220,16 +220,16 @@ data/
 ├─ mpa/                 # Converted MPA files
 ├─ COMBINED.txt         # Merged MPA file
 └─ counts/
-    ├─ txt/             # Extracted taxonomic levels in TXT
-    │  ├─ counts_species.txt
-    │  ├─ counts_genus.txt
-    │  ├─ counts_family.txt
-    │  ├── ...
-    └─ csv/             # Final CSV output
-       ├─ counts_species.csv
-       ├─ counts_genus.csv
-       ├─ counts_family.csv
-       ├─ ...
+   ├─ txt/             # Extracted taxonomic levels in TXT
+   │  ├─ counts_species.txt
+   │  ├─ counts_genus.txt
+   │  ├─ counts_family.txt
+   │  ├── ...
+   └─ csv/             # Final CSV output
+      ├─ counts_species.csv
+      ├─ counts_genus.csv
+      ├─ counts_family.csv
+      ├─ ...
 ```
 
 ## Conclusion
