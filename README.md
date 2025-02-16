@@ -34,7 +34,7 @@ This `counts_phylum.csv` is easy to visualize as Relative Abundance Barplot!
 ## Quick Start (Full Pipeline)
 To run the full pipeline, use the following command:
 ```bash
-! ./KrakenParser/kraken2csv.sh data/kreports
+KrakenParser data/kreports
 ```
 This will:
 1. Convert Kraken2 reports to MPA format
@@ -47,15 +47,10 @@ This will:
 - The Kraken2 reports must be inside a **subdirectory** (e.g., `data/kreports`).
 - The script automatically creates output directories and processes the data.
 
-## Installation & Dependencies
-Ensure you have the following installed:
-- **Python 3**
-- **pandas** (`pip install pandas`)
-- **KrakenTools** (https://github.com/jenniferlu717/KrakenTools)
+## Installation
 
 ```
-git clone https://github.com/jenniferlu717/KrakenTools
-git clone https://github.com/PopovIILab/KrakenParser
+pip install krakenparser
 ```
 
 ## Using Individual Scripts
@@ -63,19 +58,19 @@ You can also run each step manually if needed.
 
 ### **Step 1: Convert Kraken2 Reports to MPA Format**
 ```bash
-./KrakenParser/run_kreport2mpa.sh data/kreports data/mpa
+KrakenParser --kreport2mpa data/kreports data/mpa
 ```
 This script converts Kraken2 `.kreport` files into **MPA format** using KrakenTools.
 
 ### **Step 2: Combine MPA Files**
 ```bash
-python KrakenTools/combine_mpa.py -i data/mpa/* -o data/COMBINED.txt
+KrakenParser --combine_mpa -i data/mpa/* -o data/COMBINED.txt
 ```
 This merges multiple MPA files into a single combined file.
 
 ### **Step 3: Extract Taxonomic Levels**
 ```bash
-./KrakenParser/decombine.sh data/COMBINED.txt counts
+KrakenParser --deconstruct data/COMBINED.txt data/counts
 ```
 
 <details><summary>
@@ -169,46 +164,68 @@ This step extracts only species-level data (excluding human reads).
 
 ### **Step 4: Process Extracted Taxonomic Data**
 ```bash
-%%bash
-for file in counts/txt/counts_*.txt
-do
-    python KrakenParser/processing_script.py data/COMBINED.txt "$file"
-done
+KrakenParser --process data/COMBINED.txt data/counts/txt/counts_phylum.txt
+```
+```bash
+KrakenParser --process data/COMBINED.txt data/counts/txt/counts_class.txt
+```
+```bash
+KrakenParser --process data/COMBINED.txt data/counts/txt/counts_order.txt
+```
+```bash
+KrakenParser --process data/COMBINED.txt data/counts/txt/counts_family.txt
+```
+```bash
+KrakenParser --process data/COMBINED.txt data/counts/txt/counts_genus.txt
+```
+```bash
+KrakenParser --process data/COMBINED.txt data/counts/txt/counts_species.txt
 ```
 This script cleans up taxonomic names (removes prefixes, replaces underscores with spaces).
 
 ### **Step 5: Convert TXT to CSV**
 ```bash
-%%bash
-for file in counts/txt/counts_*.txt
-do
-    python KrakenParser/convert2csv.py "$file" counts/csv/$(basename "$file" .txt).csv
-done
+KrakenParser --txt2csv data/counts/txt/counts_phylum.txt data/counts/csv/counts_phylum.csv
+```
+```bash
+KrakenParser --txt2csv data/counts/txt/counts_class.txt data/counts/csv/counts_class.csv
+```
+```bash
+KrakenParser --txt2csv data/counts/txt/counts_order.txt data/counts/csv/counts_order.csv
+```
+```bash
+KrakenParser --txt2csv data/counts/txt/counts_family.txt data/counts/csv/counts_family.csv
+```
+```bash
+KrakenParser --txt2csv data/counts/txt/counts_genus.txt data/counts/csv/counts_genus.csv
+```
+```bash
+KrakenParser --txt2csv data/counts/txt/counts_species.txt data/counts/csv/counts_species.csv
 ```
 This converts the processed text files into structured CSV format.
 
-## Script Breakdown
-### **kraken2csv.sh** (Main Pipeline)
+## Arguments Breakdown
+### **KrakenParser** (Main Pipeline)
 - Automates the entire workflow.
 - Takes **one argument**: the path to Kraken2 reports (`data/kreports`).
 - Runs all the scripts in sequence.
 
-### **run_kreport2mpa.sh** (Step 1)
+### **--kreport2mpa** (Step 1)
 - Converts Kraken2 reports to MPA format.
 - Uses `KrakenTools/kreport2mpa.py`.
 
-### **combine_mpa.py** (Step 2)
+### **--combine_mpa** (Step 2)
 - Combines multiple MPA files into one.
 
-### **decombine.sh** (Step 3)
+### **--deconstruct** (Step 3)
 - Extracts **phylum, class, order, family, genus, species** into separate text files.
 - Removes human-related reads.
 
-### **processing_script.py** (Step 4)
+### **--process** (Step 4)
 - Cleans and formats extracted taxonomic data.
 - Removes prefixes (`s__`, `g__`, etc.), replaces underscores with spaces.
 
-### **convert2csv.py** (Step 5)
+### **--txt2csv** (Step 5)
 - Converts cleaned text files to CSV.
 - Transposes data so that sample names become rows.
 
