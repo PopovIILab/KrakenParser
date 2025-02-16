@@ -13,6 +13,8 @@ You can run the entire pipeline with **a single command**, or use the scripts **
 
 ## Output example
 
+`counts_phylum.csv` parsed from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+
 ```
 Sample_id,Euryarchaeota,Euglenozoa,Parabasalia,Apicomplexa,Basidiomycota,Ascomycota,Acidobacteriota,Bdellovibrionota,Chlorobiota,Ignavibacteriota,Planctomycetota,Spirochaetota,Thermotogota,Fusobacteriota,Cyanobacteriota,Mycoplasmatota,Actinomycetota,Pseudomonadota,Bacteroidota,Deferribacterota,Campylobacterota,Thermodesulfobacteriota,Bacillota,Negarnaviricota,Nucleocytoviricota,Uroviricota,Peploviricota
 X1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -23,6 +25,8 @@ X5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0
 X6,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,3,3,0,3,2,13,0,0,0,1
 X7,20,1,1,5,1,9,1,6,1,7,1,13,1,3,9,4,10,139,519,0,8,2,81,1,3,1,0
 ```
+
+This `counts_phylum.csv` is easy to visualize as Relative Abundance Barplot!
 
 ## Quick Start (Full Pipeline)
 To run the full pipeline, use the following command:
@@ -209,20 +213,20 @@ This converts the processed text files into structured CSV format.
 After running the full pipeline, the output directory will look like this:
 ```
 data/
-├── kreports/            # Input Kraken2 reports
-├── mpa/                 # Converted MPA files
-├── COMBINED.txt         # Merged MPA file
-├── counts/
-│   ├── txt/             # Extracted taxonomic levels in TXT
-│   │   ├── counts_species.txt
-│   │   ├── counts_genus.txt
-│   │   ├── counts_family.txt
-│   │   ├── ...
-│   ├── csv/             # Final CSV output
-│   │   ├── counts_species.csv
-│   │   ├── counts_genus.csv
-│   │   ├── counts_family.csv
-│   │   ├── ...
+├─ kreports/            # Input Kraken2 reports
+├─ mpa/                 # Converted MPA files
+├─ COMBINED.txt         # Merged MPA file
+└─ counts/
+    ├─ txt/             # Extracted taxonomic levels in TXT
+    │  ├─ counts_species.txt
+    │  ├─ counts_genus.txt
+    │  ├─ counts_family.txt
+    │  ├── ...
+    └─ csv/             # Final CSV output
+       ├─ counts_species.csv
+       ├─ counts_genus.csv
+       ├─ counts_family.csv
+       ├─ ...
 ```
 
 ## Conclusion
