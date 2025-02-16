@@ -13,9 +13,6 @@ SOURCE_DIR=$1
 PARENT_DIR=$(dirname "$SOURCE_DIR")
 MPA_DIR="$PARENT_DIR/mpa"
 
-# Create the destination directory if it doesn't exist
-mkdir -p "$MPA_DIR"
-
 # Run the old script with the correct paths
 ./scripts/run_kreport2mpa.sh "$SOURCE_DIR" "$MPA_DIR"
 
