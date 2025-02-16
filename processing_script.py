@@ -12,7 +12,7 @@ def process_files(source_file, destination_file):
     # Read the first line from the source file and modify it
     with open(source_file, 'r') as file:
         first_line_source = file.readline()
-    modified_first_line = '\t'.join(word.replace('.txt', '') for word in first_line_source.split())
+    modified_first_line = '\t'.join(word.split('.')[0] for word in first_line_source.split())
 
     # Read all content from the destination file and modify species names
     with open(destination_file, 'r') as file:
