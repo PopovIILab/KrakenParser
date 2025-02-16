@@ -1,13 +1,15 @@
-# Kraken2CSV: Convert Kraken2 Reports to CSV
+# KrakenParser: Convert Kraken2 Reports to CSV
 
 ## Overview
-Kraken2CSV is a collection of scripts designed to process Kraken2 reports and convert them into CSV format. This pipeline extracts taxonomic abundance data at six levels:
+KrakenParser is a collection of scripts designed to process Kraken2 reports and convert them into CSV format. This pipeline extracts taxonomic abundance data at six levels:
 - **Phylum**
 - **Class**
 - **Order**
 - **Family**
 - **Genus**
 - **Species**
+
+You can run the entire pipeline with **a single command**, or use the scripts **individually** depending on your needs.
 
 ## Output example
 
@@ -22,12 +24,10 @@ X6,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,3,3,0,3,2,13,0,0,0,1
 X7,20,1,1,5,1,9,1,6,1,7,1,13,1,3,9,4,10,139,519,0,8,2,81,1,3,1,0
 ```
 
-You can run the entire pipeline with **a single command**, or use the scripts **individually** depending on your needs.
-
 ## Quick Start (Full Pipeline)
 To run the full pipeline, use the following command:
 ```bash
-! ./Kraken2CSV/kraken2csv.sh data/kreports
+! ./KrakenParser/kraken2csv.sh data/kreports
 ```
 This will:
 1. Convert Kraken2 reports to MPA format
@@ -46,39 +46,126 @@ Ensure you have the following installed:
 - **pandas** (`pip install pandas`)
 - **KrakenTools** (https://github.com/jenniferlu717/KrakenTools)
 
+```
+git clone https://github.com/jenniferlu717/KrakenTools
+git clone https://github.com/PopovIILab/KrakenParser
+```
+
 ## Using Individual Scripts
 You can also run each step manually if needed.
 
 ### **Step 1: Convert Kraken2 Reports to MPA Format**
 ```bash
-! ./scripts/run_kreport2mpa.sh data/kreports data/mpa
+./KrakenParser/run_kreport2mpa.sh data/kreports data/mpa
 ```
 This script converts Kraken2 `.kreport` files into **MPA format** using KrakenTools.
 
 ### **Step 2: Combine MPA Files**
 ```bash
-%run KrakenTools/combine_mpa.py -i data/mpa/* -o data/COMBINED.txt
+python KrakenTools/combine_mpa.py -i data/mpa/* -o data/COMBINED.txt
 ```
 This merges multiple MPA files into a single combined file.
 
 ### **Step 3: Extract Taxonomic Levels**
 ```bash
-%%bash
-grep -E "s__" data/COMBINED.txt \
+./KrakenParser/decombine.sh data/COMBINED.txt counts
+```
+
+<details><summary>
+<b>Clipped image from decombine.sh:</b>
+</summary><br> 
+
+```bash
+#!/bin/bash
+
+# Check if the correct number of arguments was provided
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 PATH_TO_SOURCE PATH_TO_DESTINATION"
+    exit 1
+fi
+
+# Setting the path to the source file directory and destination directory
+SOURCE_FILE=$1
+DESTINATION_DIR=$2
+
+mkdir -p "${DESTINATION_DIR}"
+mkdir -p "${DESTINATION_DIR}"/txt
+mkdir -p "${DESTINATION_DIR}"/csv
+
+grep -E "s__" "${SOURCE_FILE}" \
 | grep -v "t__" \
 | grep -v "s__Homo_sapiens" \
 | sed "s/^.*|//g" \
 | sed "s/SRS[0-9]*-//g" \
-> counts/txt/counts_species.txt
+> "${DESTINATION_DIR}"/txt/counts_species.txt
+
+grep -E "g__" "${SOURCE_FILE}" \
+| grep -v "t__" \
+| grep -v "s__" \
+| grep -v "g__Homo" \
+| sed "s/^.*|//g" \
+| sed "s/SRS[0-9]*-//g" \
+> "${DESTINATION_DIR}"/txt/counts_genus.txt
+
+grep -E "f__" "${SOURCE_FILE}" \
+| grep -v "t__" \
+| grep -v "s__" \
+| grep -v "g__" \
+| grep -v "f__Hominidae" \
+| sed "s/^.*|//g" \
+| sed "s/SRS[0-9]*-//g" \
+> "${DESTINATION_DIR}"/txt/counts_family.txt
+
+grep -E "o__" "${SOURCE_FILE}" \
+| grep -v "t__" \
+| grep -v "s__" \
+| grep -v "g__" \
+| grep -v "f__" \
+| grep -v "o__Primates" \
+| sed "s/^.*|//g" \
+| sed "s/SRS[0-9]*-//g" \
+> "${DESTINATION_DIR}"/txt/counts_order.txt
+
+grep -E "c__" "${SOURCE_FILE}" \
+| grep -v "t__" \
+| grep -v "s__" \
+| grep -v "g__" \
+| grep -v "f__" \
+| grep -v "o__" \
+| grep -v "c__Mammalia" \
+| sed "s/^.*|//g" \
+| sed "s/SRS[0-9]*-//g" \
+> "${DESTINATION_DIR}"/txt/counts_class.txt
+
+grep -E "p__" "${SOURCE_FILE}" \
+| grep -v "t__" \
+| grep -v "s__" \
+| grep -v "g__" \
+| grep -v "f__" \
+| grep -v "o__" \
+| grep -v "c__" \
+| grep -v "p__Chordata" \
+| sed "s/^.*|//g" \
+| sed "s/SRS[0-9]*-//g" \
+> "${DESTINATION_DIR}"/txt/counts_phylum.txt
+
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to run decombine.sh"
+    exit 1
+fi
+echo "MPA file decombined successfully. Output stored in $DESTINATION_DIR"
 ```
-This step extracts only species-level data (excluding human reads). Similar commands apply for other levels.
+  
+</details>
+
+This step extracts only species-level data (excluding human reads).
 
 ### **Step 4: Process Extracted Taxonomic Data**
 ```bash
 %%bash
 for file in counts/txt/counts_*.txt
 do
-    python scripts/processing_script.py data/COMBINED.txt "$file"
+    python KrakenParser/processing_script.py data/COMBINED.txt "$file"
 done
 ```
 This script cleans up taxonomic names (removes prefixes, replaces underscores with spaces).
@@ -88,7 +175,7 @@ This script cleans up taxonomic names (removes prefixes, replaces underscores wi
 %%bash
 for file in counts/txt/counts_*.txt
 do
-    python scripts/convert2csv.py "$file" counts/csv/$(basename "$file" .txt).csv
+    python KrakenParser/convert2csv.py "$file" counts/csv/$(basename "$file" .txt).csv
 done
 ```
 This converts the processed text files into structured CSV format.
