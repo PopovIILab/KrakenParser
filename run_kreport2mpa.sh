@@ -14,7 +14,7 @@ DESTINATION_DIR=$2
 mkdir -p "${DESTINATION_DIR}"
 
 # Cycle through each file in the source file directory
-for file in "${SOURCE_DIR}"/*.txt; do
+for file in "${SOURCE_DIR}"/*.*; do
     # Getting file name without path
     filename=$(basename "${file}")
     # Forming a command to process a file
