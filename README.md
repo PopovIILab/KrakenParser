@@ -53,12 +53,12 @@ This will:
 pip install krakenparser
 ```
 
-## Using Individual Scripts
+## Using Individual Modules
 You can also run each step manually if needed.
 
 ### **Step 1: Convert Kraken2 Reports to MPA Format**
 ```bash
-KrakenParser --kreport2mpa data/kreports data/mpa
+KrakenParser --kreport2mpa -i data/kreports -o data/mpa
 ```
 This script converts Kraken2 `.kreport` files into **MPA format** using KrakenTools.
 
@@ -70,7 +70,7 @@ This merges multiple MPA files into a single combined file.
 
 ### **Step 3: Extract Taxonomic Levels**
 ```bash
-KrakenParser --deconstruct data/COMBINED.txt data/counts
+KrakenParser --deconstruct -i data/COMBINED.txt -o data/counts
 ```
 
 <details><summary>
@@ -164,43 +164,43 @@ This step extracts only species-level data (excluding human reads).
 
 ### **Step 4: Process Extracted Taxonomic Data**
 ```bash
-KrakenParser --process data/COMBINED.txt data/counts/txt/counts_phylum.txt
+KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_phylum.txt
 ```
 ```bash
-KrakenParser --process data/COMBINED.txt data/counts/txt/counts_class.txt
+KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_class.txt
 ```
 ```bash
-KrakenParser --process data/COMBINED.txt data/counts/txt/counts_order.txt
+KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_order.txt
 ```
 ```bash
-KrakenParser --process data/COMBINED.txt data/counts/txt/counts_family.txt
+KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_family.txt
 ```
 ```bash
-KrakenParser --process data/COMBINED.txt data/counts/txt/counts_genus.txt
+KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_genus.txt
 ```
 ```bash
-KrakenParser --process data/COMBINED.txt data/counts/txt/counts_species.txt
+KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_species.txt
 ```
 This script cleans up taxonomic names (removes prefixes, replaces underscores with spaces).
 
 ### **Step 5: Convert TXT to CSV**
 ```bash
-KrakenParser --txt2csv data/counts/txt/counts_phylum.txt data/counts/csv/counts_phylum.csv
+KrakenParser --txt2csv -i data/counts/txt/counts_phylum.txt -o data/counts/csv/counts_phylum.csv
 ```
 ```bash
-KrakenParser --txt2csv data/counts/txt/counts_class.txt data/counts/csv/counts_class.csv
+KrakenParser --txt2csv -i data/counts/txt/counts_class.txt -o data/counts/csv/counts_class.csv
 ```
 ```bash
-KrakenParser --txt2csv data/counts/txt/counts_order.txt data/counts/csv/counts_order.csv
+KrakenParser --txt2csv -i data/counts/txt/counts_order.txt -o data/counts/csv/counts_order.csv
 ```
 ```bash
-KrakenParser --txt2csv data/counts/txt/counts_family.txt data/counts/csv/counts_family.csv
+KrakenParser --txt2csv -i data/counts/txt/counts_family.txt -o data/counts/csv/counts_family.csv
 ```
 ```bash
-KrakenParser --txt2csv data/counts/txt/counts_genus.txt data/counts/csv/counts_genus.csv
+KrakenParser --txt2csv -i data/counts/txt/counts_genus.txt -o data/counts/csv/counts_genus.csv
 ```
 ```bash
-KrakenParser --txt2csv data/counts/txt/counts_species.txt data/counts/csv/counts_species.csv
+KrakenParser --txt2csv -i data/counts/txt/counts_species.txt -o data/counts/csv/counts_species.csv
 ```
 This converts the processed text files into structured CSV format.
 
@@ -216,6 +216,7 @@ This converts the processed text files into structured CSV format.
 
 ### **--combine_mpa** (Step 2)
 - Combines multiple MPA files into one.
+- Uses `KrakenTools/combine_mpa.py`.
 
 ### **--deconstruct** (Step 3)
 - Extracts **phylum, class, order, family, genus, species** into separate text files.
@@ -233,15 +234,15 @@ This converts the processed text files into structured CSV format.
 After running the full pipeline, the output directory will look like this:
 ```
 data/
-├─ kreports/            # Input Kraken2 reports
-├─ mpa/                 # Converted MPA files
-├─ COMBINED.txt         # Merged MPA file
+├─ kreports/           # Input Kraken2 reports
+├─ mpa/                # Converted MPA files
+├─ COMBINED.txt        # Merged MPA file
 └─ counts/
    ├─ txt/             # Extracted taxonomic levels in TXT
    │  ├─ counts_species.txt
    │  ├─ counts_genus.txt
    │  ├─ counts_family.txt
-   │  ├── ...
+   │  ├─ ...
    └─ csv/             # Final CSV output
       ├─ counts_species.csv
       ├─ counts_genus.csv
