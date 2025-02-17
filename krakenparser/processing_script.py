@@ -2,6 +2,7 @@
 
 import sys
 import shutil
+import argparse
 from pathlib import Path
 
 def modify_species_names(line):
@@ -39,10 +40,12 @@ def process_files(source_file, destination_file):
         shutil.rmtree(pycache_dir)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: ./processing_script.py <source_file_path> <destination_file_path>")
-        sys.exit(1)
-
-    source_file_path = sys.argv[1]
-    destination_file_path = sys.argv[2]
-    process_files(source_file_path, destination_file_path)
+    # Use argparse to parse command-line arguments
+    parser = argparse.ArgumentParser(description="Process a source file and modify a destination file.")
+    parser.add_argument("-i", required=True, help="Path to the source file")
+    parser.add_argument("-o", required=True, help="Path to the destination file")
+    
+    args = parser.parse_args()
+    
+    # Call the function with parsed arguments
+    process_files(args.i, args.o)

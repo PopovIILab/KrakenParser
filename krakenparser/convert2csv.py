@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+import argparse
 import pandas as pd
 import shutil
 from pathlib import Path
@@ -22,19 +22,19 @@ def convert_to_csv(input_file, output_file):
     data_transposed.to_csv(output_file, index_label='Sample_id')
     print(f"Data has been successfully converted and saved as '{output_file}'.")
 
-    # Get the path to the current directory (same location as the script)
+    # Remove pycache if it exists
     current_dir = Path(__file__).resolve().parent
     pycache_dir = current_dir / "__pycache__"
-
-    # Check if __pycache__ exists and remove it
     if pycache_dir.exists() and pycache_dir.is_dir():
         shutil.rmtree(pycache_dir)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: ./convert2csv.py <input_file_path> <output_file_path>")
-        sys.exit(1)
+    # Use argparse to handle command-line arguments
+    parser = argparse.ArgumentParser(description="Convert a tab-separated file into a transposed CSV file.")
+    parser.add_argument("-i", required=True, help="Path to the input file")
+    parser.add_argument("-o", required=True, help="Path to the output CSV file")
 
-    input_file_path = sys.argv[1]
-    output_file_path = sys.argv[2]
-    convert_to_csv(input_file_path, output_file_path)
+    args = parser.parse_args()
+
+    # Call function with parsed arguments
+    convert_to_csv(args.input, args.output)
