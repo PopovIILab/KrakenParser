@@ -1,9 +1,29 @@
 #!/bin/bash
 
-# Check if the correct number of arguments was provided
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 PATH_TO_SOURCE"
-    exit 1
+# Function to display usage
+usage() {
+    echo "Usage: $0 -i|--input PATH_TO_SOURCE"
+    echo
+    echo "  -i, --input   Path to the source directory"
+    echo "  -h            Show this help message"
+    exit 0
+}
+
+# Parse command-line arguments
+SOURCE_DIR=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -i|--input) SOURCE_DIR="$2"; shift 2 ;;
+        -h|--help) usage ;;
+        *) echo "Unknown option: $1"; usage ;;
+    esac
+done
+
+# Ensure SOURCE_DIR is set
+if [ -z "$SOURCE_DIR" ]; then
+    echo "Error: input is required."
+    usage
 fi
 
 # Determine the directory of this script
@@ -12,7 +32,6 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 # PART 1: CONVERT KRAKEN2 TO MPA
 
 # Setting the path to the source file directory and destination directory
-SOURCE_DIR=$1
 PARENT_DIR=$(dirname "$SOURCE_DIR")
 MPA_DIR="$PARENT_DIR/mpa"
 

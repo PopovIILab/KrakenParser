@@ -34,7 +34,8 @@ This `counts_phylum.csv` is easy to visualize as Relative Abundance Barplot!
 ## Quick Start (Full Pipeline)
 To run the full pipeline, use the following command:
 ```bash
-KrakenParser data/kreports
+KrakenParser --complete -i data/kreports
+#Having troubles? Run KrakenParser --complete -h
 ```
 This will:
 1. Convert Kraken2 reports to MPA format
@@ -59,149 +60,42 @@ You can also run each step manually if needed.
 ### **Step 1: Convert Kraken2 Reports to MPA Format**
 ```bash
 KrakenParser --kreport2mpa -i data/kreports -o data/mpa
+#Having troubles? Run KrakenParser --kreport2mpa -h
 ```
 This script converts Kraken2 `.kreport` files into **MPA format** using KrakenTools.
 
 ### **Step 2: Combine MPA Files**
 ```bash
 KrakenParser --combine_mpa -i data/mpa/* -o data/COMBINED.txt
+#Having troubles? Run KrakenParser --combine_mpa -h
 ```
 This merges multiple MPA files into a single combined file.
 
 ### **Step 3: Extract Taxonomic Levels**
 ```bash
 KrakenParser --deconstruct -i data/COMBINED.txt -o data/counts
+#Having troubles? Run KrakenParser --deconstruct -h
 ```
-
-<details><summary>
-<b>Clipped image from decombine.sh:</b>
-</summary><br> 
-
-```bash
-#!/bin/bash
-
-# Check if the correct number of arguments was provided
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 PATH_TO_SOURCE PATH_TO_DESTINATION"
-    exit 1
-fi
-
-# Setting the path to the source file directory and destination directory
-SOURCE_FILE=$1
-DESTINATION_DIR=$2
-
-mkdir -p "${DESTINATION_DIR}"
-mkdir -p "${DESTINATION_DIR}"/txt
-mkdir -p "${DESTINATION_DIR}"/csv
-
-grep -E "s__" "${SOURCE_FILE}" \
-| grep -v "t__" \
-| grep -v "s__Homo_sapiens" \
-| sed "s/^.*|//g" \
-| sed "s/SRS[0-9]*-//g" \
-> "${DESTINATION_DIR}"/txt/counts_species.txt
-
-grep -E "g__" "${SOURCE_FILE}" \
-| grep -v "t__" \
-| grep -v "s__" \
-| grep -v "g__Homo" \
-| sed "s/^.*|//g" \
-| sed "s/SRS[0-9]*-//g" \
-> "${DESTINATION_DIR}"/txt/counts_genus.txt
-
-grep -E "f__" "${SOURCE_FILE}" \
-| grep -v "t__" \
-| grep -v "s__" \
-| grep -v "g__" \
-| grep -v "f__Hominidae" \
-| sed "s/^.*|//g" \
-| sed "s/SRS[0-9]*-//g" \
-> "${DESTINATION_DIR}"/txt/counts_family.txt
-
-grep -E "o__" "${SOURCE_FILE}" \
-| grep -v "t__" \
-| grep -v "s__" \
-| grep -v "g__" \
-| grep -v "f__" \
-| grep -v "o__Primates" \
-| sed "s/^.*|//g" \
-| sed "s/SRS[0-9]*-//g" \
-> "${DESTINATION_DIR}"/txt/counts_order.txt
-
-grep -E "c__" "${SOURCE_FILE}" \
-| grep -v "t__" \
-| grep -v "s__" \
-| grep -v "g__" \
-| grep -v "f__" \
-| grep -v "o__" \
-| grep -v "c__Mammalia" \
-| sed "s/^.*|//g" \
-| sed "s/SRS[0-9]*-//g" \
-> "${DESTINATION_DIR}"/txt/counts_class.txt
-
-grep -E "p__" "${SOURCE_FILE}" \
-| grep -v "t__" \
-| grep -v "s__" \
-| grep -v "g__" \
-| grep -v "f__" \
-| grep -v "o__" \
-| grep -v "c__" \
-| grep -v "p__Chordata" \
-| sed "s/^.*|//g" \
-| sed "s/SRS[0-9]*-//g" \
-> "${DESTINATION_DIR}"/txt/counts_phylum.txt
-
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to run decombine.sh"
-    exit 1
-fi
-echo "MPA file decombined successfully. Output stored in $DESTINATION_DIR"
-```
-  
-</details>
 
 This step extracts only species-level data (excluding human reads).
 
 ### **Step 4: Process Extracted Taxonomic Data**
 ```bash
 KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_phylum.txt
+#Having troubles? Run KrakenParser --process -h
 ```
-```bash
-KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_class.txt
-```
-```bash
-KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_order.txt
-```
-```bash
-KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_family.txt
-```
-```bash
-KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_genus.txt
-```
-```bash
-KrakenParser --process -i data/COMBINED.txt -o data/counts/txt/counts_species.txt
-```
+
+Repeat on other 5 taxonomical levels (class, order, family, genus, species) or wrap up `KrakenParser --process` to a loop!
+
 This script cleans up taxonomic names (removes prefixes, replaces underscores with spaces).
 
 ### **Step 5: Convert TXT to CSV**
 ```bash
 KrakenParser --txt2csv -i data/counts/txt/counts_phylum.txt -o data/counts/csv/counts_phylum.csv
+#Having troubles? Run KrakenParser --txt2csv -h
 ```
-```bash
-KrakenParser --txt2csv -i data/counts/txt/counts_class.txt -o data/counts/csv/counts_class.csv
-```
-```bash
-KrakenParser --txt2csv -i data/counts/txt/counts_order.txt -o data/counts/csv/counts_order.csv
-```
-```bash
-KrakenParser --txt2csv -i data/counts/txt/counts_family.txt -o data/counts/csv/counts_family.csv
-```
-```bash
-KrakenParser --txt2csv -i data/counts/txt/counts_genus.txt -o data/counts/csv/counts_genus.csv
-```
-```bash
-KrakenParser --txt2csv -i data/counts/txt/counts_species.txt -o data/counts/csv/counts_species.csv
-```
+Repeat on other 5 taxonomical levels (class, order, family, genus, species) or wrap up `KrakenParser --txt2csv` to a loop!
+
 This converts the processed text files into structured CSV format.
 
 ## Arguments Breakdown

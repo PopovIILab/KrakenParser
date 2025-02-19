@@ -2,14 +2,22 @@ import argparse
 import subprocess
 import shutil
 from pathlib import Path
+import sys
 from .version import __version__
+
 
 # Main function to run the tool
 def main():
     print("KrakenParser by Ilia V. Popov")
     # Set up argument parser
     parser = argparse.ArgumentParser(
-        description="KrakenParser: Convert Kraken2 Reports to CSV."
+        description="KrakenParser: Convert Kraken2 Reports to CSV.",
+        add_help=False,
+    )
+    parser.add_argument(
+        "--complete",
+        action="store_true",
+        help="Run the full pipeline automated",
     )
     parser.add_argument(
         "--kreport2mpa",
@@ -46,25 +54,30 @@ def main():
 
     # Map flags to corresponding scripts
     command_map = {
-        "kreport2mpa": package_dir/"run_kreport2mpa.sh",
-        "combine_mpa": package_dir/"combine_mpa.py",
-        "deconstruct": package_dir/"decombine.sh",
-        "process": package_dir/"processing_script.py",
-        "txt2csv": package_dir/"convert2csv.py",
+        "complete": package_dir / "kraken2csv.sh",
+        "kreport2mpa": package_dir / "run_kreport2mpa.sh",
+        "combine_mpa": package_dir / "combine_mpa.py",
+        "deconstruct": package_dir / "decombine.sh",
+        "process": package_dir / "processing_script.py",
+        "txt2csv": package_dir / "convert2csv.py",
     }
+
+    if "-h" in sys.argv or "--help" in sys.argv:
+        if not any(getattr(args, key) for key in command_map):
+            parser.print_help()
+            return
 
     # Find which argument was given and run the corresponding script
     for arg, script in command_map.items():
         if getattr(args, arg):
-            subprocess.run([script] + extra_args, check=True)  # Pass extra arguments to the script
+            subprocess.run(
+                [script] + extra_args, check=True
+            )  # Pass extra arguments to the script
             return
 
-    subprocess.run([package_dir/"kraken2csv.sh"] + extra_args, check=True)
+    parser.print_help()
 
-
-    # Get the path to the current directory (same location as the script)
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
+    pycache_dir = package_dir / "__pycache__"
 
     # Check if __pycache__ exists and remove it
     if pycache_dir.exists() and pycache_dir.is_dir():
