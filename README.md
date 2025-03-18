@@ -77,6 +77,12 @@ KrakenParser --deconstruct -i data/COMBINED.txt -o data/counts
 #Having troubles? Run KrakenParser --deconstruct -h
 ```
 
+If user wants to inspect **Viruses** domain separately:
+```bash
+KrakenParser --deconstruct_viruses -i data/COMBINED.txt -o data/counts_viruses
+#Having troubles? Run KrakenParser --deconstruct_viruses -h
+```
+
 This step extracts only species-level data (excluding human reads).
 
 ### **Step 4: Process Extracted Taxonomic Data**
@@ -112,9 +118,9 @@ This converts the processed text files into structured CSV format.
 - Combines multiple MPA files into one.
 - Uses `KrakenTools/combine_mpa.py`.
 
-### **--deconstruct** (Step 3)
+### **--deconstruct** & **--deconstruct_viruses** (Step 3)
 - Extracts **phylum, class, order, family, genus, species** into separate text files.
-- Removes human-related reads.
+- Removes human-related reads (**--deconstruct** only).
 
 ### **--process** (Step 4)
 - Cleans and formats extracted taxonomic data.

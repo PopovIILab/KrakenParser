@@ -35,6 +35,11 @@ def main():
         help="Extract Taxonomic Levels from combined MPA file",
     )
     parser.add_argument(
+        "--deconstruct_viruses",
+        action="store_true",
+        help="Extract Taxonomic Levels from combined MPA file using only VIRUSES domain",
+    )
+    parser.add_argument(
         "--process",
         action="store_true",
         help="Process Extracted Taxonomic Data",
@@ -58,6 +63,7 @@ def main():
         "kreport2mpa": package_dir / "run_kreport2mpa.sh",
         "combine_mpa": package_dir / "combine_mpa.py",
         "deconstruct": package_dir / "decombine.sh",
+        "deconstruct_viruses": package_dir / "decombine_viruses.sh",
         "process": package_dir / "processing_script.py",
         "txt2csv": package_dir / "convert2csv.py",
     }
