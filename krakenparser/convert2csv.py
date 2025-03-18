@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import argparse
-import pandas as pd
 import shutil
 from pathlib import Path
+import argparse
+import pandas as pd
 
 
 def convert_to_csv(input_file, output_file):
