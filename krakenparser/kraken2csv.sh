@@ -2,9 +2,9 @@
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 -i|--input PATH_TO_SOURCE"
+    echo "Usage: $(basename "$0") -i|--input PATH_TO_SOURCE"
     echo
-    echo "  -i, --input   Path to the source directory"
+    echo "  -i, --input   Path to the source directory — Kraken2 reports must be inside a subdirectory (e.g., data/kreports)"
     echo "  -h            Show this help message"
     exit 0
 }

@@ -2,7 +2,7 @@
 
 # Function to display detailed usage information
 usage() {
-    echo "Usage: $0 -i PATH_TO_SOURCE_FILE -o PATH_TO_DESTINATION"
+    echo "Usage: $(basename "$0") -i PATH_TO_SOURCE_FILE -o PATH_TO_DESTINATION"
     echo
     echo "  -i, --input    PATH_TO_SOURCE_FILE    Path to the Combined MPA input file to be processed."
     echo "  -o, --output   PATH_TO_DESTINATION    Path to the directory where processed output files will be stored."

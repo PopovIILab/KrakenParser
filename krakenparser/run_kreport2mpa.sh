@@ -2,7 +2,7 @@
 
 # Function to display usage information
 usage() {
-    echo "Usage: $0 -i PATH_TO_SOURCE -o PATH_TO_DESTINATION"
+    echo "Usage: $(basename "$0") -i PATH_TO_SOURCE -o PATH_TO_DESTINATION"
     echo
     echo "  -i, --input PATH_TO_SOURCE       Path to the source directory containing files to convert."
     echo "  -o, --output PATH_TO_DESTINATION  Path to the destination directory where converted files will be stored."
