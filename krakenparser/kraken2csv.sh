@@ -72,4 +72,11 @@ for file in "$COUNTS_DIR"/txt/counts_*.txt; do
     python "$SCRIPT_DIR/convert2csv.py" -i "$file" -o "$CSV_FILE"
 done
 
+# PART 6: CALCULATE RELATIVE ABUNDANCE
+
+for file in "$COUNTS_DIR"/csv/counts_*.csv; do
+    CSV_RA_FILE="$COUNTS_DIR/csv_relabund/$(basename "$file")"
+    python "$SCRIPT_DIR/relabund.py" -i "$file" -o "$CSV_RA_FILE"
+done
+
 echo "All steps completed successfully!"

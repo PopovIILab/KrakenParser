@@ -14,7 +14,7 @@ def convert_to_csv(input_file, output_file):
     data.columns = data.iloc[0]
     data = data.drop(data.index[0])
 
-    # Transpose the DataFrame so that sample names become rows and bacteria species with their abundance become columns
+    # Transpose the DataFrame so that sample names become rows and microbial taxa with their abundance become columns
     data_transposed = data.T
     data_transposed.columns = data_transposed.iloc[0]
     data_transposed = data_transposed.drop(data_transposed.index[0])
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         "-i",
         "--input",
         required=True,
-        help="Path to the input TXT file. This file should contain sample names in columns and bacterial species in rows.",
+        help="Path to the input TXT file. This file should contain sample names in columns and microbial taxa in rows.",
     )
     parser.add_argument(
         "-o",

@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 
 
-def modify_species_names(line):
+def modify_taxa_names(line):
     prefixes = ["s__", "g__", "f__", "o__", "c__", "p__"]
     for prefix in prefixes:
         if line.startswith(prefix):
@@ -23,10 +23,10 @@ def process_files(source_file, destination_file):
         word.split(".")[0] for word in first_line_source.split()
     )
 
-    # Read all content from the destination file and modify species names
+    # Read all content from the destination file and modify taxa names
     with open(destination_file, "r") as file:
         lines = file.readlines()
-    modified_lines = [modify_species_names(line.strip()) for line in lines]
+    modified_lines = [modify_taxa_names(line.strip()) for line in lines]
 
     # Combine the modified first line with the modified content of the destination file
     updated_content = modified_first_line + "\n" + "\n".join(modified_lines)
@@ -47,7 +47,7 @@ def process_files(source_file, destination_file):
 if __name__ == "__main__":
     # Use argparse to parse command-line arguments
     parser = argparse.ArgumentParser(
-        description="Reads a source file, processes its first line, modifies species names in a destination file, and updates it."
+        description="Reads a source file, processes its first line, modifies taxa names in a destination file, and updates it."
     )
     parser.add_argument(
         "-i",
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         "-o",
         "--output",
         required=True,
-        help="Path to the destination file. This file's contents will be updated with cleaned species names.",
+        help="Path to the destination file. This file's contents will be updated with cleaned taxa names.",
     )
 
     args = parser.parse_args()
