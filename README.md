@@ -16,6 +16,8 @@ You can run the entire pipeline with **a single command**, or use the scripts **
 
 ## Output example
 
+### Total abundance output
+
 `counts_phylum.csv` parsed from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
 
 ```
@@ -29,7 +31,39 @@ X6,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,3,3,0,3,2,13,0,0,0,1
 X7,20,1,1,5,1,9,1,6,1,7,1,13,1,3,9,4,10,139,519,0,8,2,81,1,3,1,0
 ```
 
-This `counts_phylum.csv` is easy to visualize as Relative Abundance Barplot!
+### Relative abundance `.csv` output
+
+`counts_phylum.csv` parsed from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+
+```
+Sample_id,taxon,rel_abund_perc
+X12,Pseudomonadota,59.45772220448566
+X12,Euryarchaeota,18.31670744178662
+X12,Actinomycetota,8.996761322991876
+X12,Other (<3.5%),7.299742374085121
+X12,Thermodesulfobacteriota,5.929066656650726
+X13,Euryarchaeota,43.13026941990481
+X13,Pseudomonadota,39.23287866024437
+X13,Other (<3.5%),7.276209401617095
+X13,Thermodesulfobacteriota,5.639854274215032
+X13,Actinomycetota,4.72078824401869
+X14,Bacillota,34.34990866595965
+X14,Pseudomonadota,24.631178075323472
+X14,Euryarchaeota,19.192448404834906
+X14,Thermodesulfobacteriota,11.065854871125346
+X14,Other (<3.5%),10.760609982756622
+X17,Pseudomonadota,39.388087541135384
+X17,Thermodesulfobacteriota,34.62882760036646
+X17,Other (<3.5%),10.126568180629615
+X17,Actinomycetota,5.762973020610789
+X17,Euryarchaeota,5.326536027721231
+X17,Bacillota,4.767007629536514
+X18,Thermodesulfobacteriota,44.61072552960362
+X18,Pseudomonadota,30.31998388150275
+X18,Other (<3.5%),12.935751468859937
+X18,Actinomycetota,6.21567616670579
+X18,Bacillota,5.9178629533279015
+```
 
 ## Quick Start (Full Pipeline)
 To run the full pipeline, use the following command:
@@ -43,6 +77,7 @@ This will:
 3. Extract taxonomic levels into separate text files
 4. Process extracted text files
 5. Convert them into CSV format
+6. Calculate relative abundance
 
 ### **Input Requirements**
 - The Kraken2 reports must be inside a **subdirectory** (e.g., `data/kreports`).
@@ -104,6 +139,23 @@ Repeat on other 5 taxonomical levels (class, order, family, genus, species) or w
 
 This converts the processed text files into structured CSV format.
 
+### **Step 6: Calculate relative abundance**
+```bash
+KrakenParser --relabund -i data/counts/csv/counts_phylum.csv -o data/counts/csv_relabund/counts_phylum.csv
+#Having troubles? Run KrakenParser --txt2csv -h
+```
+Repeat on other 5 taxonomical levels (class, order, family, genus, species) or wrap up `KrakenParser --relabund` to a loop!
+
+This calculates relative abundance and saves as CSV format.
+
+If user wants to group low abundant taxa in "Other" group:
+```bash
+KrakenParser --relabund -i data/counts/csv/counts_phylum.csv -o data/counts/csv_relabund/counts_phylum.csv --other 3.5
+#Having troubles? Run KrakenParser --deconstruct_viruses -h
+```
+
+This will group all the taxa that have abundance <3.5 into "Other <3.5%" group. Other parameters are welcome!
+
 ## Arguments Breakdown
 ### **KrakenParser** (Main Pipeline)
 - Automates the entire workflow.
@@ -143,11 +195,16 @@ data/
    │  ├─ counts_genus.txt
    │  ├─ counts_family.txt
    │  ├─ ...
-   └─ csv/             # Final CSV output
-      ├─ counts_species.csv
-      ├─ counts_genus.csv
-      ├─ counts_family.csv
-      ├─ ...
+   └─ csv/             # Total abundance CSV output
+   │  ├─ counts_species.csv
+   │  ├─ counts_genus.csv
+   │  ├─ counts_family.csv
+   │  ├─ ...
+   └─ csv_relabund/    # Relative abundance CSV output
+   │  ├─ counts_species.csv
+   │  ├─ counts_genus.csv
+   │  ├─ counts_family.csv
+   │  ├─ ...
 ```
 
 ## Conclusion
