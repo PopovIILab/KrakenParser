@@ -21,14 +21,12 @@ You can run the entire pipeline with **a single command**, or use the scripts **
 `counts_phylum.csv` parsed from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
 
 ```
-Sample_id,Euryarchaeota,Euglenozoa,Parabasalia,Apicomplexa,Basidiomycota,Ascomycota,Acidobacteriota,Bdellovibrionota,Chlorobiota,Ignavibacteriota,Planctomycetota,Spirochaetota,Thermotogota,Fusobacteriota,Cyanobacteriota,Mycoplasmatota,Actinomycetota,Pseudomonadota,Bacteroidota,Deferribacterota,Campylobacterota,Thermodesulfobacteriota,Bacillota,Negarnaviricota,Nucleocytoviricota,Uroviricota,Peploviricota
-X1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-X2,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,4,0,0,0,0
-X3,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,0,0,0,4,0,0,0,0
-X4,1313,0,0,0,0,4,0,0,0,0,0,1,2,2,1,3,3,17,33,4,5,4,112,0,0,0,0
-X5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0
-X6,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,3,3,0,3,2,13,0,0,0,1
-X7,20,1,1,5,1,9,1,6,1,7,1,13,1,3,9,4,10,139,519,0,8,2,81,1,3,1,0
+Sample_id,Cercozoa,Ciliophora,Evosea,Fornicata,Parabasalia,Euglenozoa,Bacillariophyta,Apicomplexa,Microsporidia,Basidiomycota,Ascomycota,Thermosulfidibacterota,Coprothermobacterota,Candidatus Absconditabacteria,Caldisericota,Thermodesulfobiota,Calditrichota,Atribacterota,Elusimicrobiota,Dictyoglomota,Candidatus Bipolaricaulota,Candidatus Fervidibacterota,Candidatus Saccharibacteria,Nitrospinota,Chrysiogenota,Aquificota,Fusobacteriota,Nitrospirota,Synergistota,Thermotogota,Bdellovibrionota,Acidobacteriota,Campylobacterota,Myxococcota,Spirochaetota,Deferribacterota,Fibrobacterota,Gemmatimonadota,Candidatus Cloacimonadota,Balneolota,Ignavibacteriota,Rhodothermota,Chlorobiota,Bacteroidota,Candidatus Omnitrophota,Lentisphaerota,Chlamydiota,Kiritimatiellota,Verrucomicrobiota,Planctomycetota,Thermodesulfobacteriota,Thermomicrobiota,Vulcanimicrobiota,Armatimonadota,Mycoplasmatota,Chloroflexota,Cyanobacteriota,Deinococcota,Bacillota,Actinomycetota,Pseudomonadota,Nanoarchaeota,Candidatus Nanohalarchaeota,Candidatus Micrarchaeota,Candidatus Lokiarchaeota,Candidatus Korarchaeota,Nitrososphaerota,Thermoproteota,Candidatus Thermoplasmatota,Euryarchaeota,Taleaviricota,Saleviricota,Artverviricota,Lenarviricota,Duplornaviricota,Kitrinoviricota,Negarnaviricota,Pisuviricota,Preplasmiviricota,Nucleocytoviricota,Peploviricota,Uroviricota,Phixviricota,Hofneiviricota,Cossaviricota,Cressdnaviricota
+X12,0,0,0,1,7,75,12,213,0,619,3361,0,0,0,2,4,4,5,16,23,2,5,34,57,65,94,125,206,365,512,781,894,1083,1296,1305,3372,7,65,70,8,22,114,410,8722,3,5,21,194,756,25626,69457,26,33,62,138,575,1709,11456,19610,105394,696527,0,0,0,2,1,16,58,82,214574,0,0,0,0,0,0,9,12,5,19,2,470,3,194,0,471
+X13,0,0,6,0,67,136,11,450,0,731,4204,8,8,2,2,11,18,23,34,17,7,4,36,69,145,185,492,271,521,1068,2193,1303,1350,1362,9272,14473,11,73,106,20,66,191,987,13963,6,10,59,590,1032,25916,125332,8,16,119,392,748,2951,7468,66347,104908,871855,0,0,2,14,2,44,177,93,958465,0,0,1,0,1,2,17,48,2,56,23,1094,1,0,0,561
+X14,0,35,144,1,322,147,9,1983,9,1009,5675,16,79,30,42,175,129,216,128,219,23,1,82,206,235,541,7375,812,2374,5434,684,2027,10044,1562,7480,4103,51,137,380,75,435,333,1660,69771,14,146,491,900,1490,8199,235713,35,9,116,5052,2433,10799,1935,731685,66706,524667,1,5,2,43,2,888,1098,227,408817,1,1,2,1,1,2,155,75,21,329,10,1686,4,2,31,106
+X17,5,2,90,3,258,345,209,1303,103,996,5835,256,6,15,19,31,297,119,220,47,62,159,154,138,5005,332,964,1597,2723,8999,984,7242,21739,5174,30158,842,23,735,93,58,452,528,5405,51595,174,33,354,1539,4876,10581,715131,242,17,384,2957,8519,16706,4874,98445,119013,813416,1,0,4,50,8,356,581,112,110000,2,2,1,2,3,3,45,25,76,154,16,1063,8,0,1,38
+X18,0,1,69,1,283,509,283,1645,191,1575,8357,433,12,10,9,30,285,52,253,39,51,278,86,194,7353,425,1094,2687,4059,4774,1632,9596,10543,6941,89344,921,14,1317,43,31,433,843,9514,56724,93,23,267,2551,6433,14313,1153566,348,10,497,2371,4568,23113,7157,153027,160728,784029,0,0,2,23,1,525,776,125,46762,0,0,3,6,0,6,50,8,73,103,22,1269,24,0,3,40
 ```
 
 ### Relative abundance `.csv` output
@@ -181,6 +179,10 @@ This will group all the taxa that have abundance <3.5 into "Other <3.5%" group. 
 ### **--txt2csv** (Step 5)
 - Converts cleaned text files to CSV.
 - Transposes data so that sample names become rows.
+
+### **--relabund** (Step 6)
+- Calculates relative abundance based on total abundance CSV.
+- Optionally can group low abundant taxa.
 
 ## Example Output Structure
 After running the full pipeline, the output directory will look like this:
