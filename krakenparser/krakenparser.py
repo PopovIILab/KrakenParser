@@ -50,6 +50,11 @@ def main():
         help="Convert TXT to CSV",
     )
     parser.add_argument(
+        "--relabund",
+        action="store_true",
+        help="Calculate relative abundance",
+    )
+    parser.add_argument(
         "-V", "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
@@ -66,6 +71,7 @@ def main():
         "deconstruct_viruses": package_dir / "decombine_viruses.sh",
         "process": package_dir / "processing_script.py",
         "txt2csv": package_dir / "convert2csv.py",
+        "relabund": package_dir / "relabund.py",
     }
 
     if "-h" in sys.argv or "--help" in sys.argv:
