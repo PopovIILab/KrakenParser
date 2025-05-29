@@ -149,7 +149,7 @@ This converts the processed text files into structured CSV format.
 ### **Step 6: Calculate relative abundance**
 ```bash
 KrakenParser --relabund -i data/counts/csv/counts_phylum.csv -o data/counts/csv_relabund/counts_phylum.csv
-#Having troubles? Run KrakenParser --txt2csv -h
+#Having troubles? Run KrakenParser --relabund -h
 ```
 Repeat on other 5 taxonomical levels (class, order, family, genus, species) or wrap up `KrakenParser --relabund` to a loop!
 
@@ -158,7 +158,7 @@ This calculates relative abundance and saves as CSV format.
 If user wants to group low abundant taxa in "Other" group:
 ```bash
 KrakenParser --relabund -i data/counts/csv/counts_phylum.csv -o data/counts/csv_relabund/counts_phylum.csv --other 3.5
-#Having troubles? Run KrakenParser --deconstruct_viruses -h
+#Having troubles? Run KrakenParser --relabund -h
 ```
 
 This will group all the taxa that have abundance <3.5 into "Other <3.5%" group. Other parameters are welcome!
