@@ -70,7 +70,7 @@ X9,Haemophilus ducreyi,6.635047434158754
 
 |[Stacked Barplot](https://github.com/PopovIILab/KrakenParser/wiki/Stacked-Barplot-API)|[Streamgraph](https://github.com/PopovIILab/KrakenParser/wiki/Streamgraph-API)|[Stacked Barplot + Streamgraph](https://github.com/PopovIILab/KrakenParser/wiki/Combined-Stacked-Barplot-&-Streamgraph)|[Clustermap](https://github.com/PopovIILab/KrakenParser/wiki/Clustermap)|
 |-------|-------|-------|-------|
-|||||
+|![kpstbar](https://github.com/user-attachments/assets/916b0164-28be-4f49-9634-707408487b85)|![kpstream](https://github.com/user-attachments/assets/5c6d930c-e85f-4e2e-9dbf-8caefca49a76)|![combined_white](https://github.com/user-attachments/assets/58acea93-f079-46fd-ac4b-d2ac83098c59)|![kpclust](https://github.com/user-attachments/assets/98a4d540-7c43-4802-8f77-277a5637a7a1)|
 
 ## Quick Start (Full Pipeline)
 To run the full pipeline, use the following command:
