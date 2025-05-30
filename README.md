@@ -14,6 +14,8 @@ KrakenParser is a collection of scripts designed to process Kraken2 reports and 
 
 You can run the entire pipeline with **a single command**, or use the scripts **individually** depending on your needs.
 
+🔗 Please visit [KrakenParser wiki](https://github.com/PopovIILab/KrakenParser/wiki) page
+
 ## Output example
 
 ### Total abundance output
