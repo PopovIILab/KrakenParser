@@ -61,10 +61,10 @@ def stacked_barplot(
     - df: Pandas DataFrame containing the dataset.
     - metadata: Optional DataFrame with sample metadata (must include 'Sample_id').
     - metadata_group: Column in `metadata` to group samples by for aggregation.
-    - sample_order: Optional list to specify the order of columns (samples) in the heatmap.
+    - sample_order: Optional list to specify the order of columns (samples) in the barplot.
     - figsize: Tuple (width, height) of the figure.
     - cmap: Colormap name (str) or list of colors.
-    - bar_width: width parameter for bars.
+    - bar_width: Width parameter for bars.
     - edgecolor: Color of the edges (borders) drawn around each stacked area in the stacked barplot.
     - edge_linewidth: Width of the edge lines around each stacked area.
     - title: Title of the plot.
