@@ -1,10 +1,10 @@
+yaml
 name: CI: pytest
-
 on:
   push:
-    branches: [ main, add-ci-tests ]
+    branches: [ dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ dev ]
 
 jobs:
   build-test:
