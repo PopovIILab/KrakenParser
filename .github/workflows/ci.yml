@@ -1,5 +1,4 @@
-yaml
-name: CI: pytest
+name: pytest
 on:
   push:
     branches: [ dev ]
