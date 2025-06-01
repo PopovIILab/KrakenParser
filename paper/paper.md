@@ -44,7 +44,7 @@ Each of these steps is exposed as a sub-command in the CLI, so advanced users ca
 - Stacked Bar Plots: Utilizing `matplotlib` [@Hunter2007] and `pandas` [@reback2020pandas], `KrakenParser` can generate stacked bar plots that display the relative abundances of taxa across multiple samples. These plots provide a clear comparison of taxonomic compositions between samples.
 - Streamgraphs: For a more dynamic representation, `KrakenParser` can create streamgraphs using `matplotlib`’s [@Hunter2007] stackplot function with a symmetric baseline. This visualization emphasizes changes in taxa abundances over a series of samples, highlighting temporal or sequential patterns. ￼
 - Combined Visualizations: To offer both detailed and overarching views, `KrakenParser` supports combined plots that integrate stacked bar plots and streamgraphs. This dual representation aids in comprehensive data analysis.
-- Clustermaps: Employing `seaborn` [@Waskom2021], KrakenParser can produce clustermaps that perform hierarchical clustering on taxa and samples. These heatmaps reveal patterns and groupings in the data, facilitating the identification of similar taxonomic profiles.
+- Clustermaps: Employing `seaborn` [@Waskom2021], `KrakenParser` can produce clustermaps that perform hierarchical clustering on taxa and samples. These heatmaps reveal patterns and groupings in the data, facilitating the identification of similar taxonomic profiles.
 
 These visualization tools are accessible through the `KrakenParser` Python API, allowing users to customize and integrate them into their analysis workflows seamlessly.
 
