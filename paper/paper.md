@@ -12,6 +12,7 @@ authors:
 affiliations:
  - name: Faculty of Bioengineering and Veterinary Medicine, Don State Technical University, Russia
    index: 1
+   ror: 00x5je630
 date: 1 June 2025
 bibliography: paper.bib
 ---
