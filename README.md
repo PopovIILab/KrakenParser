@@ -1,5 +1,9 @@
 # KrakenParser: Convert Kraken2 Reports to CSV
 
+![License](https://img.shields.io/badge/License-MIT-steelblue)
+[![Downloads](https://static.pepy.tech/badge/krakenparser)](https://pepy.tech/project/krakenparser)
+![CI](https://github.com/PopovIILab/KrakenParser/actions/workflows/ci.yml/badge.svg)
+
 <img src="https://github.com/PopovIILab/KrakenParser/blob/main/imgs/KrakenParser_logo_light.png#gh-light-mode-only" align="left"/>
 <img src="https://github.com/PopovIILab/KrakenParser/blob/main/imgs/KrakenParser_logo_dark.png#gh-dark-mode-only" align="left"/>
 
@@ -218,10 +222,10 @@ data/
    │  ├─ counts_family.csv
    │  ├─ ...
    └─ csv_relabund/    # Relative abundance CSV output
-   │  ├─ counts_species.csv
-   │  ├─ counts_genus.csv
-   │  ├─ counts_family.csv
-   │  ├─ ...
+      ├─ counts_species.csv
+      ├─ counts_genus.csv
+      ├─ counts_family.csv
+      ├─ ...
 ```
 
 ## Conclusion
