@@ -42,7 +42,6 @@ X9,0,3,2,16,7,1,23,12,10,9,1,2,134,40,390,289,29,372,27,81,150,90,9,88,32,287,88
 
 ```
 Sample_id,taxon,rel_abund_perc
-Sample_id,taxon,rel_abund_perc
 X1,Pseudomonadota,85.03558294577552
 X1,Bacillota,10.72121619814011
 X1,Other (<4.0%),4.243200856084384
