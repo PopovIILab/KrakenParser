@@ -42,8 +42,8 @@ def test_full_pipeline_end_to_end(demo_run):
         assert csv_path.stat().st_size > 0, f"counts_{rank}.csv is empty"
 
     # 3. Assert relative‐abundance CSVs exist and are non‐empty
-    rel_dir = run_dir / "counts" / "csv_relabund"
-    assert rel_dir.exists(), "csv_relabund directory is missing"
-    rel_species = rel_dir / "counts_species.csv"
-    assert rel_species.exists(), "Missing counts_species.csv in csv_relabund"
-    assert rel_species.stat().st_size > 0, "counts_species.csv is empty"
+    rel_dir = run_dir / "rel_abund"
+    assert rel_dir.exists(), "rel_abund directory is missing"
+    rel_species = rel_dir / "ra_species.csv"
+    assert rel_species.exists(), "Missing ra_species.csv in csv_relabund"
+    assert rel_species.stat().st_size > 0, "ra_species.csv is empty"
