@@ -55,7 +55,6 @@ fi
 # Create destination directories
 mkdir -p "${DESTINATION_DIR}/txt"
 mkdir -p "${DESTINATION_DIR}/csv"
-mkdir -p "${DESTINATION_DIR}/csv_relabund"
 
 # Process input file and generate output files
 grep -E "s__" "${SOURCE_FILE}" \

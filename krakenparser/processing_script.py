@@ -35,6 +35,8 @@ def process_files(source_file, destination_file):
     with open(destination_file, "w") as file:
         file.write(updated_content)
 
+    print(f"Processed {destination_file} successfully.")
+
     # Get the path to the current directory (same location as the script)
     current_dir = Path(__file__).resolve().parent
     pycache_dir = current_dir / "__pycache__"
