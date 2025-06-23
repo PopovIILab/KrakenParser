@@ -38,7 +38,7 @@ X9,0,3,2,16,7,1,23,12,10,9,1,2,134,40,390,289,29,372,27,81,150,90,9,88,32,287,88
 
 ### Relative abundance output
 
-`counts_phylum.csv` parsed from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+`ra_phylum.csv` calculated from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
 
 ```
 Sample_id,taxon,rel_abund_perc
@@ -56,6 +56,43 @@ X8,Other (<4.0%),3.6360248531887933
 X9,Pseudomonadota,85.62839981589192
 X9,Bacillota,12.473649123439218
 X9,Other (<4.0%),1.8979510606688494
+```
+
+### α-diversity output
+
+`alpha_div.csv` calculated from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+
+```
+Sample,Shannon,Pielou,Chao1
+X1,3.911345447107001,0.5269245043289149,2274.533185840708
+X2,3.9944130792536563,0.4906424221265042,4155.0
+...
+X8,3.442077115880119,0.42753293021330063,4177.251358695652
+X9,4.033664950188261,0.5050385978575492,3492.16
+```
+
+### β-diversity output
+
+`beta_div_bray.csv` calculated from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+
+```
+,X1,X2,...,X8,X9
+X1,0.0,0.398,...,0.61,0.353
+X2,0.398,0.0,...,0.723,0.388
+...
+X8,0.61,0.723,...,0.0,0.665
+X9,0.353,0.388,...,0.665,0.0
+```
+
+`beta_div_jaccard.csv` calculated from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+
+```
+,X1,X2,...,X8,X9
+X1,0.0,0.7073170731707317,...,0.8223938223938224,0.7232472324723247
+X2,0.7073170731707317,0.0,...,0.835016835016835,0.7352941176470589
+...
+X8,0.8223938223938224,0.835016835016835,...,0.0,0.8066914498141264
+X9,0.7232472324723247,0.7352941176470589,...,0.8066914498141264,0.0
 ```
 
 ### Visualization examples gallery
@@ -81,6 +118,7 @@ This will:
 4. Process extracted text files
 5. Convert them into CSV format
 6. Calculate relative abundance
+7. Calculate α & β-diversities
 
 ### **Input Requirements**
 - The Kraken2 reports must be inside a **subdirectory** (e.g., `data/kreports`).
@@ -159,6 +197,22 @@ KrakenParser --relabund -i data/counts/csv/counts_phylum.csv -o data/counts/csv_
 
 This will group all the taxa that have abundance <3.5 into "Other <3.5%" group. Other parameters are welcome!
 
+### **Step 7: Calculate α & β-diversities**
+```bash
+KrakenParser --diversity -i data/counts/csv/counts_species.csv -o data/diversity
+#Having troubles? Run KrakenParser --diversity -h
+```
+
+This calculates α & β-diversities and saves them as CSV format to directory provided in the output.
+
+If user wants to use another depth for β-diversity calculations:
+```bash
+KrakenParser --diversity -i data/counts/csv/counts_species.csv -o data/diversity --depth 750
+#Having troubles? Run KrakenParser --diversity -h
+```
+
+Other parameters are welcome!
+
 ## Arguments Breakdown
 ### **KrakenParser** (Main Pipeline)
 - Automates the entire workflow.
@@ -189,29 +243,39 @@ This will group all the taxa that have abundance <3.5 into "Other <3.5%" group. 
 - Calculates relative abundance based on total abundance CSV.
 - Optionally can group low abundant taxa.
 
+### **--diversity** (Step 7)
+- Calculates α & β-diversities based on total species abundance CSV.
+- Shannon, Pielou & Chao1 indices for α-diversity
+- Bray-Curtis & Jaccard indices for β-diversity
+- Uses 1000 depth for β-diversity as default (can be adjusted with -d)
+
 ## Example Output Structure
 After running the full pipeline, the output directory will look like this:
 ```
 data/
-├─ kreports/           # Input Kraken2 reports
-├─ mpa/                # Converted MPA files
-├─ COMBINED.txt        # Merged MPA file
-└─ counts/
-   ├─ txt/             # Extracted taxonomic levels in TXT
-   │  ├─ counts_species.txt
-   │  ├─ counts_genus.txt
-   │  ├─ counts_family.txt
-   │  ├─ ...
-   └─ csv/             # Total abundance CSV output
-   │  ├─ counts_species.csv
-   │  ├─ counts_genus.csv
-   │  ├─ counts_family.csv
-   │  ├─ ...
-   └─ csv_relabund/    # Relative abundance CSV output
-      ├─ counts_species.csv
-      ├─ counts_genus.csv
-      ├─ counts_family.csv
-      ├─ ...
+├─ kreports/               # Input Kraken2 reports
+├─ mpa/                    # Converted MPA files
+├─ COMBINED.txt            # Merged MPA file
+├─ counts/
+│  ├─ txt/                 # Extracted taxonomic levels in TXT
+│  │  ├─ counts_species.txt
+│  │  ├─ counts_genus.txt
+│  │  ├─ counts_family.txt
+│  │  ├─ ...
+│  └─ csv/                 # Total abundance CSV output
+│  │  ├─ counts_species.csv
+│  │  ├─ counts_genus.csv
+│  │  ├─ counts_family.csv
+│  │  ├─ ...
+├─ rel_abund/              # Relative abundance CSV output
+│  ├─ ra_species.csv
+│  ├─ ra_genus.csv
+│  ├─ ra_family.csv
+│  ├─ ...
+└─ diversity/
+   ├─ alpha_div.csv
+   ├─ beta_div_bray.csv
+   └─ beta_div_jaccard.csv
 ```
 
 ## Conclusion
