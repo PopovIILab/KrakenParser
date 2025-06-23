@@ -62,7 +62,6 @@ for file in "$COUNTS_DIR"/txt/counts_*.txt; do
         echo "Error: Failed to process $file"
         exit 1
     fi
-    echo "Processed $file successfully."
 done
 
 # PART 5: CONVERT TXT FILES TO CSV
@@ -74,9 +73,18 @@ done
 
 # PART 6: CALCULATE RELATIVE ABUNDANCE
 
+mkdir -p "$PARENT_DIR/rel_abund"
+
 for file in "$COUNTS_DIR"/csv/counts_*.csv; do
-    CSV_RA_FILE="$COUNTS_DIR/csv_relabund/$(basename "$file")"
+    base=$(basename "$file")
+    new_name="${base/counts_/ra_}"
+    CSV_RA_FILE="$PARENT_DIR/rel_abund/$new_name"
     python "$SCRIPT_DIR/relabund.py" -i "$file" -o "$CSV_RA_FILE"
 done
+
+# PART 7: CALCULATE α & β-DIVERSITIES
+
+CSV_SPECIES_FILE="$COUNTS_DIR/csv/counts_species.csv"
+python "$SCRIPT_DIR/diversity.py" -i "$CSV_SPECIES_FILE" -o "$PARENT_DIR/diversity"
 
 echo "All steps completed successfully!"

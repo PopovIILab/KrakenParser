@@ -55,6 +55,11 @@ def main():
         help="Calculate relative abundance",
     )
     parser.add_argument(
+        "--diversity",
+        action="store_true",
+        help="Calculate α & β-diversities",
+    )
+    parser.add_argument(
         "-V", "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
@@ -72,6 +77,7 @@ def main():
         "process": package_dir / "processing_script.py",
         "txt2csv": package_dir / "convert2csv.py",
         "relabund": package_dir / "relabund.py",
+        "diversity": package_dir / "diversity.py",
     }
 
     if "-h" in sys.argv or "--help" in sys.argv:
