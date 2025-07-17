@@ -99,11 +99,11 @@ X9,0.7232472324723247,0.7352941176470589,...,0.8066914498141264,0.0
 
 |[Stacked Barplot](https://github.com/PopovIILab/KrakenParser/wiki/Stacked-Barplot-API)|[Streamgraph](https://github.com/PopovIILab/KrakenParser/wiki/Streamgraph-API)|
 |-------|-------|
-|![kpstbar](https://github.com/user-attachments/assets/916b0164-28be-4f49-9634-707408487b85)|![kpstream](https://github.com/user-attachments/assets/5c6d930c-e85f-4e2e-9dbf-8caefca49a76)|
+|![kpstbar](https://github.com/user-attachments/assets/916b0164-28be-4f49-9634-707408487b85)|![kpstream](https://github.com/user-attachments/assets/8fc09fdb-e397-4c39-9290-ad11da5335a8)|
 
 [Stacked Barplot + Streamgraph](https://github.com/PopovIILab/KrakenParser/wiki/Combined-Stacked-Barplot-&-Streamgraph)|[Clustermap](https://github.com/PopovIILab/KrakenParser/wiki/Clustermap)|
 |-------|-------|
-|![combined_white](https://github.com/user-attachments/assets/58acea93-f079-46fd-ac4b-d2ac83098c59)|![kpclust](https://github.com/user-attachments/assets/98a4d540-7c43-4802-8f77-277a5637a7a1)|
+|![combined_white](https://github.com/user-attachments/assets/48b3f6e3-6dd5-4298-a793-23dcd549e90c)|![kpclust](https://github.com/user-attachments/assets/98a4d540-7c43-4802-8f77-277a5637a7a1)|
 
 ## Quick Start (Full Pipeline)
 To run the full pipeline, use the following command:
@@ -263,10 +263,10 @@ data/
 │  │  ├─ counts_family.txt
 │  │  ├─ ...
 │  └─ csv/                 # Total abundance CSV output
-│  │  ├─ counts_species.csv
-│  │  ├─ counts_genus.csv
-│  │  ├─ counts_family.csv
-│  │  ├─ ...
+│     ├─ counts_species.csv
+│     ├─ counts_genus.csv
+│     ├─ counts_family.csv
+│     ├─ ...
 ├─ rel_abund/              # Relative abundance CSV output
 │  ├─ ra_species.csv
 │  ├─ ra_genus.csv
