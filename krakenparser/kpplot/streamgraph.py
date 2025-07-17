@@ -19,6 +19,7 @@ def streamgraph(
     sample_order: Optional[List[str]] = None,
     figsize: Tuple[int, int] = (14, 7),
     cmap: Optional[Union[str, List[str]]] = "tab20",
+    bar_width: float = 0.6,
     fill_alpha: float = 1.0,
     edgecolor: Optional[str] = None,
     edge_linewidth: float = 0.3,
@@ -137,11 +138,15 @@ def streamgraph(
 
     colors = [color_dict[col] for col in df_plot.columns]
 
+    centers = np.arange(len(df_plot.index))
+    xs = np.column_stack((centers - bar_width / 2, centers + bar_width / 2)).flatten()
+
     fig, ax = plt.subplots(figsize=figsize, facecolor=background_color)
 
+    ys = np.repeat(df_plot.values.T, 2, axis=1)
     layers = ax.stackplot(
-        df_plot.index,
-        df_plot.values.T,
+        xs,
+        ys,
         labels=df_plot.columns,
         colors=colors,
         alpha=fill_alpha,
@@ -187,10 +192,9 @@ def streamgraph(
     if grid:
         ax.grid(axis="x", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)
 
-    positions = np.arange(len(df_plot.index))
     labels = df_plot.index.tolist()
     plt.xticks(
-        positions,
+        centers,
         labels,
         rotation=xticks_rotation,
         ha=xticks_ha,
