@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel>=0.42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "krakenparser"
+version = "1.0.0"
+description = "A collection of scripts designed to process Kraken2 reports and convert them into CSV format."
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+authors = [{name = "Ilia Popov", email = "iljapopov17@gmail.com"}]
+requires-python = ">=3.10,<=3.16"
+dependencies = [
+    "pandas>=2.0.0,<=2.3.3",
+    "matplotlib>=3.7.0,<=3.10.8",
+    "numpy>=1.24.0,<=2.3.5",
+    "seaborn>=0.12.0,<=0.13.2",
+    "scikit-bio>=0.6.0,<=0.7.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/PopovIILab/KrakenParser"
+
+[project.scripts]
+KrakenParser = "krakenparser.krakenparser:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:This figure includes Axes that are not compatible with tight_layout:UserWarning",
+    "ignore:Tight layout not applied.*:UserWarning",
+    "ignore:Samples with zero total abundance.*:UserWarning",
+]
+
+[tool.coverage.run]
+source = ["krakenparser"]
+omit = [
+    "krakenparser/krakenparser.py",
+    "krakenparser/mpa/transform2mpa.py",
+    "krakenparser/mpa/mpa_table.py",
+]
