@@ -3,7 +3,6 @@
 import pandas as pd
 import numpy as np
 import sys
-import shutil
 import argparse
 from pathlib import Path
 from skbio.diversity import beta_diversity
@@ -20,11 +19,11 @@ def shannon_index(counts):
 
 # Define Pielou's evenness
 def pielou_evenness(counts):
-    counts = np.array(counts)
-    counts = counts[counts > 0]
-    H = shannon_index(counts)
-    S = len(counts)
-    return H / np.log(S) if S > 1 else 0
+    counts = np.asarray(counts)
+    S = int(np.sum(counts > 0))
+    if S <= 1:
+        return np.nan
+    return shannon_index(counts) / np.log(S)
 
 
 # Define Chao1 richness estimator
@@ -59,7 +58,7 @@ def calc_beta_div(df, output_path, rarefaction_depth):
     sample_ids = []
 
     for sample, row in df.iterrows():
-        counts = row.values.astype(int)
+        counts = np.round(row.values).astype(int)
         if counts.sum() >= rarefaction_depth:
             rarefied = subsample_counts(counts, n=rarefaction_depth)
             rarefied_counts.append(rarefied)
@@ -98,6 +97,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     input_file = Path(args.input)
+    if not input_file.is_file():
+        sys.exit(f"Error: input file not found: {input_file}")
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -108,7 +109,3 @@ if __name__ == "__main__":
     print(
         f"α & β-diversities have been successfully calculated and saved to '{output_dir}'."
     )
-
-    pycache_dir = Path(__file__).resolve().parent / "__pycache__"
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
