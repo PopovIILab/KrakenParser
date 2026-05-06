@@ -1,8 +1,9 @@
 import zipfile
 import shutil
-import subprocess
 import pytest
 from pathlib import Path
+
+from krakenparser.pipeline import run_pipeline
 
 
 @pytest.fixture
@@ -29,21 +30,45 @@ def test_full_pipeline_end_to_end(demo_run):
     run_dir = demo_run["run_dir"]
     kreports_path = run_dir / "kreports"
 
-    # 1. Run KrakenParser
-    cmd = ["KrakenParser", "--complete", "-i", str(kreports_path)]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    assert result.returncode == 0, f"Pipeline failed:\n{result.stderr}"
+    run_pipeline(str(kreports_path))
 
-    # 2. Assert each rank‐level CSV exists and is non‐empty
+    # Assert each rank-level CSV exists and is non-empty
     ranks = ["phylum", "class", "order", "family", "genus", "species"]
     for rank in ranks:
-        csv_path = run_dir / "counts" / "csv" / f"counts_{rank}.csv"
+        csv_path = run_dir / "counts" / f"counts_{rank}.csv"
         assert csv_path.exists(), f"Missing counts_{rank}.csv"
         assert csv_path.stat().st_size > 0, f"counts_{rank}.csv is empty"
 
-    # 3. Assert relative‐abundance CSVs exist and are non‐empty
+    # Assert relative-abundance CSVs exist and are non-empty
     rel_dir = run_dir / "rel_abund"
     assert rel_dir.exists(), "rel_abund directory is missing"
     rel_species = rel_dir / "ra_species.csv"
-    assert rel_species.exists(), "Missing ra_species.csv in csv_relabund"
+    assert rel_species.exists(), "Missing ra_species.csv"
     assert rel_species.stat().st_size > 0, "ra_species.csv is empty"
+
+    # Assert diversity outputs exist
+    diversity_dir = run_dir / "diversity"
+    assert (diversity_dir / "alpha_div.csv").exists()
+
+    # Assert intermediate files exist
+    assert (run_dir / "intermediate" / "COMBINED.txt").exists()
+
+
+def test_pipeline_overwrite_protection(demo_run):
+    run_dir = demo_run["run_dir"]
+    kreports_path = run_dir / "kreports"
+
+    run_pipeline(str(kreports_path))
+
+    # Second run without --overwrite must exit
+    with pytest.raises(SystemExit):
+        run_pipeline(str(kreports_path))
+
+
+def test_pipeline_overwrite_flag(demo_run):
+    run_dir = demo_run["run_dir"]
+    kreports_path = run_dir / "kreports"
+
+    run_pipeline(str(kreports_path))
+    # Second run with overwrite=True must succeed
+    run_pipeline(str(kreports_path), overwrite=True)
