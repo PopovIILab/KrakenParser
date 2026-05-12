@@ -113,6 +113,11 @@ KrakenParser --complete -i data/kreports -o results/
 #Having troubles? Run KrakenParser --complete -h
 ```
 
+For **reproducible** β-diversity (rarefaction is stochastic by default):
+```bash
+KrakenParser -i data/kreports -o results/ -s 42
+```
+
 This will:
 1. Convert Kraken2 reports to MPA format
 2. Combine MPA files into a single file
@@ -218,9 +223,14 @@ KrakenParser --diversity -i data/counts/counts_species.csv -o data/diversity
 #Having troubles? Run KrakenParser --diversity -h
 ```
 
-With a custom rarefaction depth for β-diversity:
+With a custom rarefaction depth:
 ```bash
-KrakenParser --diversity -i data/counts/counts_species.csv -o data/diversity --depth 750
+KrakenParser --diversity -i data/counts/counts_species.csv -o data/diversity -d 750
+```
+
+For reproducible results (rarefaction uses random subsampling — fix the seed to get the same matrix every run):
+```bash
+KrakenParser --diversity -i data/counts/counts_species.csv -o data/diversity -s 42
 ```
 
 ---
@@ -231,6 +241,7 @@ KrakenParser --diversity -i data/counts/counts_species.csv -o data/diversity --d
 - Requires `-i`: path to the Kraken2 reports directory (e.g., `data/kreports`).
 - Optional `-o`: output directory (default: parent of `-i`).
 - Optional `--keep-human`: retain human-related taxa (default: filtered out).
+- Optional `-s INT`: random seed for reproducible β-diversity rarefaction (default: random).
 
 ### **--kreport2mpa** (Step 1)
 - Batch mode: `-i DIR -o DIR` — converts all files in a directory.
@@ -260,6 +271,7 @@ KrakenParser --diversity -i data/counts/counts_species.csv -o data/diversity --d
 - Shannon, Pielou & Chao1 for α-diversity.
 - Bray-Curtis & Jaccard for β-diversity.
 - `-d INT`: rarefaction depth for β-diversity (default: 1000).
+- `-s INT`: random seed for reproducible rarefaction (default: random — results vary between runs).
 
 </details>
 
