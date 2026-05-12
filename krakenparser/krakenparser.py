@@ -1,13 +1,18 @@
 import argparse
+import logging
 import subprocess
-import shutil
 from pathlib import Path
 import sys
-from .version import __version__
+from importlib.metadata import version as _pkg_version, PackageNotFoundError as _PNF
+try:
+    __version__ = _pkg_version("krakenparser")
+except _PNF:
+    __version__ = "unknown"
 
 
 # Main function to run the tool
 def main():
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     print("KrakenParser by Ilia V. Popov")
     # Set up argument parser
     parser = argparse.ArgumentParser(
@@ -17,7 +22,7 @@ def main():
     parser.add_argument(
         "--complete",
         action="store_true",
-        help="Run the full pipeline automated",
+        help="Run the full pipeline (also the default when -i is given)",
     )
     parser.add_argument(
         "--kreport2mpa",
@@ -65,19 +70,23 @@ def main():
 
     args, extra_args = parser.parse_known_args()
 
+    for _a in extra_args:
+        if "\x00" in _a:
+            sys.exit("Error: argument contains invalid null byte.")
+
     package_dir = Path(__file__).resolve().parent  # Directory of the current script
 
-    # Map flags to corresponding scripts
+    # Map flags to (script_path, base_args_to_prepend)
     command_map = {
-        "complete": package_dir / "kraken2csv.sh",
-        "kreport2mpa": package_dir / "run_kreport2mpa.sh",
-        "combine_mpa": package_dir / "combine_mpa.py",
-        "deconstruct": package_dir / "decombine.sh",
-        "deconstruct_viruses": package_dir / "decombine_viruses.sh",
-        "process": package_dir / "processing_script.py",
-        "txt2csv": package_dir / "convert2csv.py",
-        "relabund": package_dir / "relabund.py",
-        "diversity": package_dir / "diversity.py",
+        "complete":           (package_dir / "pipeline.py",                      []),
+        "kreport2mpa":        (package_dir / "mpa" / "transform2mpa.py",         []),
+        "combine_mpa":        (package_dir / "mpa" / "mpa_table.py",             []),
+        "deconstruct":        (package_dir / "counts" / "split_mpa.py",          []),
+        "deconstruct_viruses":(package_dir / "counts" / "split_mpa.py",          ["--viruses-only"]),
+        "process":            (package_dir / "counts" / "processing_script.py",  []),
+        "txt2csv":            (package_dir / "counts" / "convert2csv.py",        []),
+        "relabund":           (package_dir / "stats" / "relabund.py",            []),
+        "diversity":          (package_dir / "stats" / "diversity.py",           []),
     }
 
     if "-h" in sys.argv or "--help" in sys.argv:
@@ -85,21 +94,29 @@ def main():
             parser.print_help()
             return
 
+    def _build_cmd(script: Path, base_args: list[str], user_args: list[str]) -> list[str]:
+        if script.suffix == ".py":
+            # Run as module (-m) so the krakenparser package stays importable.
+            # Derive dotted module name from path relative to the package root.
+            module = ".".join(
+                script.relative_to(package_dir.parent).with_suffix("").parts
+            )
+            return [sys.executable, "-m", module] + base_args + user_args
+        return [str(script)] + base_args + user_args
+
     # Find which argument was given and run the corresponding script
-    for arg, script in command_map.items():
+    for arg, (script, base_args) in command_map.items():
         if getattr(args, arg):
-            subprocess.run(
-                [script] + extra_args, check=True
-            )  # Pass extra arguments to the script
+            subprocess.run(_build_cmd(script, base_args, extra_args), check=True)
             return
 
+    # Default to full pipeline when -i/--input is given without a subcommand
+    if "-i" in extra_args or "--input" in extra_args:
+        complete_script, complete_base = command_map["complete"]
+        subprocess.run(_build_cmd(complete_script, complete_base, extra_args), check=True)
+        return
+
     parser.print_help()
-
-    pycache_dir = package_dir / "__pycache__"
-
-    # Check if __pycache__ exists and remove it
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
 
 
 if __name__ == "__main__":

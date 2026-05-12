@@ -3,9 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from typing import Optional, Tuple, Union, List
-from pathlib import Path
-import shutil
-from .base import KpPlotBase
+from .base import KpPlotBase, aggregate_by_metadata
 
 
 class KpStreamgraph(KpPlotBase):
@@ -90,24 +88,12 @@ def streamgraph(
     df = df.copy()
 
     if metadata is not None and metadata_group is not None:
-        if "Sample_id" not in metadata.columns:
-            raise ValueError("metadata must contain 'Sample_id' column")
-        if metadata_group not in metadata.columns:
-            raise ValueError(f"'{metadata_group}' column not found in metadata")
-
-        df = df.merge(
-            metadata[["Sample_id", metadata_group]], on="Sample_id", how="left"
-        )
-        df = (
-            df.groupby([metadata_group, "taxon"], as_index=False)["rel_abund_perc"]
-            .mean()
-            .rename(columns={metadata_group: "Sample_id"})
-        )
-        df["rel_abund_perc"] = df.groupby("Sample_id")["rel_abund_perc"].transform(
-            lambda x: (x / x.sum()) * 100
-        )
+        df = aggregate_by_metadata(df, metadata, metadata_group)
 
     if sample_order is not None:
+        missing = set(sample_order) - set(df["Sample_id"].unique())
+        if missing:
+            raise ValueError(f"Samples missing from data: {missing}")
         df = df[df["Sample_id"].isin(sample_order)]
         df["Sample_id"] = pd.Categorical(
             df["Sample_id"], categories=sample_order, ordered=True
@@ -128,6 +114,11 @@ def streamgraph(
             zip(df_plot.columns, sns.color_palette(cmap, n_colors=len(df_plot.columns)))
         )
     elif isinstance(cmap, list):
+        if len(cmap) < len(df_plot.columns):
+            raise ValueError(
+                f"cmap has {len(cmap)} colors but the data has {len(df_plot.columns)} "
+                "taxa; provide at least as many colors as taxa."
+            )
         color_dict = dict(zip(df_plot.columns, cmap))
     else:
         raise ValueError("cmap must be a str or a list of colors")
@@ -190,7 +181,7 @@ def streamgraph(
             text.set_fontstyle(legend_fontstyle)
 
     if grid:
-        ax.grid(axis="x", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)
+        ax.grid(axis="y", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)
 
     labels = df_plot.index.tolist()
     plt.xticks(
@@ -205,12 +196,6 @@ def streamgraph(
     )
 
     ax.set_xlim(-0.5, len(df_plot.index) - 0.5)
-
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
-
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
 
     plt.close(fig)
 

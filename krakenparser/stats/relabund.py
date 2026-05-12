@@ -1,20 +1,39 @@
 #!/usr/bin/env python
 
-import shutil
-from pathlib import Path
+import logging
+import warnings
 import argparse
+from pathlib import Path
 import pandas as pd
+
+_log = logging.getLogger(__name__)
 
 
 def calculate_rel_abund(input_file, output_file, other_threshold=None):
+    in_path = Path(input_file)
+    if not in_path.is_file():
+        raise FileNotFoundError(f"Input file not found: {in_path}")
+    out_path = Path(output_file)
+    if not out_path.parent.exists():
+        raise FileNotFoundError(f"Output directory does not exist: {out_path.parent}")
+
     # Load counts table
-    df = pd.read_csv(input_file)
+    df = pd.read_csv(in_path)
 
     # Reshape to long format: Sample_id, taxon, abundance
     long_df = df.melt(id_vars=["Sample_id"], var_name="taxon", value_name="abundance")
 
     # Summarize total abundance per sample (used for percentage calculation)
     total_abundance = long_df.groupby("Sample_id")["abundance"].transform("sum")
+
+    zero_samples = long_df.groupby("Sample_id")["abundance"].sum()
+    zero_samples = zero_samples[zero_samples == 0].index.tolist()
+    if zero_samples:
+        warnings.warn(
+            f"Samples with zero total abundance were excluded from output: {zero_samples}",
+            UserWarning,
+            stacklevel=2,
+        )
 
     # Calculate relative abundance (%)
     long_df["rel_abund_perc"] = (long_df["abundance"] / total_abundance) * 100
@@ -40,15 +59,9 @@ def calculate_rel_abund(input_file, output_file, other_threshold=None):
 
     # Save to CSV
     result.to_csv(output_file, index=False)
-    print(
-        f"Relative abundance has been successfully calculated and saved as '{output_file}'."
+    _log.info(
+        "Relative abundance saved as '%s'.", output_file
     )
-
-    # Remove __pycache__
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
-    if pycache_dir.exists():
-        shutil.rmtree(pycache_dir)
 
 
 if __name__ == "__main__":

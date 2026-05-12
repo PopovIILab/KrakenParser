@@ -2,9 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Optional, Tuple, Union, List
-from pathlib import Path
-import shutil
-from .base import KpPlotBase
+from .base import KpPlotBase, aggregate_by_metadata
 
 
 class KpClustermap(KpPlotBase):
@@ -81,28 +79,13 @@ def clustermap(
     - background_color: Background color of the figure.
 
     Returns:
-    - KpStackedBarplot: An object containing the clustermap figure and axis for customization or saving.
+    - KpClustermap: An object containing the clustermap figure and axis for customization or saving.
     """
 
     df = df.copy()
 
     if metadata is not None and metadata_group is not None:
-        if "Sample_id" not in metadata.columns:
-            raise ValueError("metadata must contain 'Sample_id' column")
-        if metadata_group not in metadata.columns:
-            raise ValueError(f"'{metadata_group}' column not found in metadata")
-
-        df = df.merge(
-            metadata[["Sample_id", metadata_group]], on="Sample_id", how="left"
-        )
-        df = (
-            df.groupby([metadata_group, "taxon"], as_index=False)["rel_abund_perc"]
-            .mean()
-            .rename(columns={metadata_group: "Sample_id"})
-        )
-        df["rel_abund_perc"] = df.groupby("Sample_id")["rel_abund_perc"].transform(
-            lambda x: (x / x.sum()) * 100
-        )
+        df = aggregate_by_metadata(df, metadata, metadata_group)
 
     if df[y_axis].dtype == object:
         other_mask = df[y_axis].str.startswith("Other")
@@ -186,11 +169,6 @@ def clustermap(
         weight=yticks_weight,
         style=yticks_style,
     )
-
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
 
     plt.close(fig)
     return KpClustermap(fig, ax)
