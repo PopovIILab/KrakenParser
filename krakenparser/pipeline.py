@@ -42,6 +42,7 @@ def run_pipeline(
     output_dir: str | None = None,
     keep_human: bool = False,
     rarefaction_depth: int = 1000,
+    seed: int | None = None,
     overwrite: bool = False,
 ) -> None:
     source_dir = Path(input_dir)
@@ -116,7 +117,7 @@ def run_pipeline(
     diversity_dir.mkdir(exist_ok=True)
     df = pd.read_csv(species_csv, index_col=0)
     calc_alpha_div(df, diversity_dir)
-    calc_beta_div(df, diversity_dir, rarefaction_depth=rarefaction_depth)
+    calc_beta_div(df, diversity_dir, rarefaction_depth=rarefaction_depth, seed=seed)
 
     _log.info("All steps completed successfully!")
 
@@ -143,6 +144,10 @@ def main() -> None:
         help="Rarefaction depth for β-diversity (default: 1000)",
     )
     parser.add_argument(
+        "-s", "--seed", type=int, default=None,
+        help="Random seed for reproducible rarefaction (default: random)",
+    )
+    parser.add_argument(
         "--overwrite", action="store_true", default=False,
         help="Overwrite the output directory if it already exists",
     )
@@ -151,6 +156,7 @@ def main() -> None:
         args.input, args.output,
         keep_human=args.keep_human,
         rarefaction_depth=args.depth,
+        seed=args.seed,
         overwrite=args.overwrite,
     )
 

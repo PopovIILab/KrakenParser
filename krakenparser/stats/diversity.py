@@ -34,10 +34,10 @@ def chao1_index(counts):
     return S_obs + (F1 * F1) / (2 * F2)
 
 
-def _subsample_counts(counts: np.ndarray, n: int) -> np.ndarray:
+def _subsample_counts(counts: np.ndarray, n: int, rng: np.random.Generator) -> np.ndarray:
     """Rarefy counts to n reads by sampling without replacement."""
     indices = np.repeat(np.arange(len(counts)), counts)
-    sampled = np.random.choice(indices, size=n, replace=False)
+    sampled = rng.choice(indices, size=n, replace=False)
     return np.bincount(sampled, minlength=len(counts)).astype(int)
 
 
@@ -57,14 +57,15 @@ def calc_alpha_div(df, output_path):
     alpha_df.to_csv(output_path / "alpha_div.csv")
 
 
-def calc_beta_div(df, output_path, rarefaction_depth):
+def calc_beta_div(df, output_path, rarefaction_depth, seed=None):
+    rng = np.random.default_rng(seed)
     rarefied_counts = []
     sample_ids = []
 
     for sample, row in df.iterrows():
         counts = np.round(row.values).astype(int)
         if counts.sum() >= rarefaction_depth:
-            rarefied = _subsample_counts(counts, n=rarefaction_depth)
+            rarefied = _subsample_counts(counts, n=rarefaction_depth, rng=rng)
             rarefied_counts.append(rarefied)
             sample_ids.append(sample)
 
@@ -94,6 +95,8 @@ if __name__ == "__main__":
                         help="Output directory path.")
     parser.add_argument("-d", "--depth", type=int, default=1000,
                         help="Rarefaction depth for β diversity (default: 1000).")
+    parser.add_argument("-s", "--seed", type=int, default=None,
+                        help="Random seed for reproducible rarefaction (default: random).")
     args = parser.parse_args()
 
     input_file = Path(args.input)
@@ -105,7 +108,7 @@ if __name__ == "__main__":
     df = pd.read_csv(input_file, index_col=0)
 
     calc_alpha_div(df, output_dir)
-    calc_beta_div(df, output_dir, args.depth)
+    calc_beta_div(df, output_dir, args.depth, seed=args.seed)
     print(
         f"α & β-diversities have been successfully calculated and saved to '{output_dir}'."
     )
