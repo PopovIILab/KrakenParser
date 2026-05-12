@@ -9,7 +9,7 @@ description = "A collection of scripts designed to process Kraken2 reports and c
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
 authors = [{name = "Ilia Popov", email = "iljapopov17@gmail.com"}]
-requires-python = ">=3.10,<=3.16"
+requires-python = ">=3.10,<=3.13"
 dependencies = [
     "pandas>=2.0.0,<=2.3.3",
     "matplotlib>=3.7.0,<=3.10.8",
