@@ -25,7 +25,7 @@ You can run the entire pipeline with **a single command**, or use the scripts **
 
 ### Total abundance output
 
-`counts_phylum.csv` parsed from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+`counts_phylum.csv` parsed from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
 ```
 Sample_id,Calditrichota,Caldisericota,Thermosulfidibacterota,Elusimicrobiota,Candidatus Fervidibacterota,Lentisphaerota,Kiritimatiellota,Vulcanimicrobiota,Thermodesulfobiota,Atribacterota,Dictyoglomota,Nitrospinota,Chrysiogenota,Coprothermobacterota,Aquificota,Thermotogota,Bdellovibrionota,Nitrospirota,Deferribacterota,Synergistota,Myxococcota,Acidobacteriota,Candidatus Bipolaricaulota,Candidatus Saccharibacteria,Candidatus Absconditabacteria,Fusobacteriota,Spirochaetota,Candidatus Omnitrophota,Chlamydiota,Verrucomicrobiota,Planctomycetota,Thermodesulfobacteriota,Campylobacterota,Candidatus Cloacimonadota,Fibrobacterota,Gemmatimonadota,Balneolota,Rhodothermota,Ignavibacteriota,Chlorobiota,Bacteroidota,Deinococcota,Thermomicrobiota,Armatimonadota,Chloroflexota,Cyanobacteriota,Mycoplasmatota,Actinomycetota,Bacillota,Pseudomonadota,Heterolobosea,Parabasalia,Fornicata,Evosea,Bacillariophyta,Cercozoa,Euglenozoa,Apicomplexa,Microsporidia,Basidiomycota,Ascomycota,Nanoarchaeota,Candidatus Micrarchaeota,Candidatus Thermoplasmatota,Candidatus Lokiarchaeota,Nitrososphaerota,Euryarchaeota,Thermoproteota,Hofneiviricota,Artverviricota,Nucleocytoviricota,Cossaviricota,Kitrinoviricota,Negarnaviricota,Lenarviricota,Pisuviricota,Peploviricota,Uroviricota
@@ -39,7 +39,7 @@ X9,0,3,2,16,7,1,23,12,10,9,1,2,134,40,390,289,29,372,27,81,150,90,9,88,32,287,88
 
 ### Relative abundance output
 
-`ra_phylum.csv` calculated from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+`ra_phylum.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
 ```
 Sample_id,taxon,rel_abund_perc
@@ -61,7 +61,7 @@ X9,Other (<4.0%),1.8979510606688494
 
 ### α-diversity output
 
-`alpha_div.csv` calculated from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+`alpha_div.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
 ```
 Sample,Shannon,Pielou,Chao1
@@ -74,7 +74,7 @@ X9,4.033664950188261,0.5050385978575492,3492.16
 
 ### β-diversity output
 
-`beta_div_bray.csv` calculated from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+`beta_div_bray.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
 ```
 ,X1,X2,...,X8,X9
@@ -85,7 +85,7 @@ X8,0.61,0.723,...,0.0,0.665
 X9,0.353,0.388,...,0.665,0.0
 ```
 
-`beta_div_jaccard.csv` calculated from 7 kraken2 reports of metagenomic samples using `KrakenParser`:
+`beta_div_jaccard.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
 ```
 ,X1,X2,...,X8,X9
@@ -278,8 +278,7 @@ KrakenParser --diversity -i data/counts/counts_species.csv -o data/diversity -s 
 ## Example Output Structure
 After running the full pipeline, the output directory will look like this:
 ```
-data/
-├─ kreports/               # Input Kraken2 reports
+results/
 ├─ counts/                 # Total abundance CSV output
 │  ├─ counts_species.csv
 │  ├─ counts_genus.csv
@@ -296,7 +295,7 @@ data/
 │  └─ beta_div_jaccard.csv
 └─ intermediate/           # Intermediate files
    ├─ mpa/                 # Converted MPA files
-   │  ├─ sample.MPA.TXT
+   │  ├─ {sample}.txt
    │  ├─ ...
    ├─ COMBINED.txt         # Merged MPA table
    └─ txt/                 # Extracted taxonomic levels in TXT
