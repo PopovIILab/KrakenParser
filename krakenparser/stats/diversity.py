@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
-import pandas as pd
-import numpy as np
-import sys
 import argparse
+import sys
 from pathlib import Path
-from skbio.diversity import beta_diversity
-from skbio.stats import subsample_counts
+
+import numpy as np
+import pandas as pd
+from scipy.spatial.distance import pdist, squareform
 
 
-# Define Shannon index
 def shannon_index(counts):
     counts = np.array(counts)
     counts = counts[counts > 0]
@@ -17,7 +16,6 @@ def shannon_index(counts):
     return -np.sum(proportions * np.log(proportions))
 
 
-# Define Pielou's evenness
 def pielou_evenness(counts):
     counts = np.asarray(counts)
     S = int(np.sum(counts > 0))
@@ -26,7 +24,6 @@ def pielou_evenness(counts):
     return shannon_index(counts) / np.log(S)
 
 
-# Define Chao1 richness estimator
 def chao1_index(counts):
     counts = np.array(counts)
     S_obs = np.sum(counts > 0)
@@ -35,6 +32,13 @@ def chao1_index(counts):
     if F2 == 0:
         return S_obs + F1 * (F1 - 1) / 2
     return S_obs + (F1 * F1) / (2 * F2)
+
+
+def _subsample_counts(counts: np.ndarray, n: int) -> np.ndarray:
+    """Rarefy counts to n reads by sampling without replacement."""
+    indices = np.repeat(np.arange(len(counts)), counts)
+    sampled = np.random.choice(indices, size=n, replace=False)
+    return np.bincount(sampled, minlength=len(counts)).astype(int)
 
 
 def calc_alpha_div(df, output_path):
@@ -60,19 +64,23 @@ def calc_beta_div(df, output_path, rarefaction_depth):
     for sample, row in df.iterrows():
         counts = np.round(row.values).astype(int)
         if counts.sum() >= rarefaction_depth:
-            rarefied = subsample_counts(counts, n=rarefaction_depth)
+            rarefied = _subsample_counts(counts, n=rarefaction_depth)
             rarefied_counts.append(rarefied)
             sample_ids.append(sample)
 
     if len(rarefied_counts) < 2:
         raise ValueError("Not enough samples passed the rarefaction threshold.")
 
-    bray_df = beta_diversity(
-        "braycurtis", rarefied_counts, ids=sample_ids
-    ).to_data_frame()
-    jaccard_df = beta_diversity(
-        "jaccard", rarefied_counts, ids=sample_ids
-    ).to_data_frame()
+    X = np.array(rarefied_counts, dtype=float)
+
+    bray_df = pd.DataFrame(
+        squareform(pdist(X, metric="braycurtis")),
+        index=sample_ids, columns=sample_ids,
+    )
+    jaccard_df = pd.DataFrame(
+        squareform(pdist(X.astype(bool).astype(float), metric="jaccard")),
+        index=sample_ids, columns=sample_ids,
+    )
 
     bray_df.to_csv(output_path / "beta_div_bray.csv")
     jaccard_df.to_csv(output_path / "beta_div_jaccard.csv")
@@ -80,20 +88,12 @@ def calc_beta_div(df, output_path, rarefaction_depth):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calculate α & β-diversities.")
-    parser.add_argument(
-        "-i",
-        "--input",
-        required=True,
-        help="Input total count table CSV (species level).",
-    )
-    parser.add_argument("-o", "--output", required=True, help="Output directory path.")
-    parser.add_argument(
-        "-d",
-        "--depth",
-        type=int,
-        default=1000,
-        help="Rarefaction depth for β diversity (default: 1000).",
-    )
+    parser.add_argument("-i", "--input", required=True,
+                        help="Input total count table CSV (species level).")
+    parser.add_argument("-o", "--output", required=True,
+                        help="Output directory path.")
+    parser.add_argument("-d", "--depth", type=int, default=1000,
+                        help="Rarefaction depth for β diversity (default: 1000).")
     args = parser.parse_args()
 
     input_file = Path(args.input)
