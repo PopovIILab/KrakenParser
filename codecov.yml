@@ -1,6 +1,4 @@
-# codecov.yml
 coverage:
   patch:
-    target: 78%   # снизить порог
-    # или:
-    informational: true  # не фейлить, только информировать
+    target: 78%
+    informational: true
