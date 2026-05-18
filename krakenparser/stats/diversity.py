@@ -34,7 +34,9 @@ def chao1_index(counts):
     return S_obs + (F1 * F1) / (2 * F2)
 
 
-def _subsample_counts(counts: np.ndarray, n: int, rng: np.random.Generator) -> np.ndarray:
+def _subsample_counts(
+    counts: np.ndarray, n: int, rng: np.random.Generator
+) -> np.ndarray:
     """Rarefy counts to n reads by sampling without replacement."""
     indices = np.repeat(np.arange(len(counts)), counts)
     sampled = rng.choice(indices, size=n, replace=False)
@@ -76,11 +78,13 @@ def calc_beta_div(df, output_path, rarefaction_depth, seed=None):
 
     bray_df = pd.DataFrame(
         squareform(pdist(X, metric="braycurtis")),
-        index=sample_ids, columns=sample_ids,
+        index=sample_ids,
+        columns=sample_ids,
     )
     jaccard_df = pd.DataFrame(
         squareform(pdist(X.astype(bool).astype(float), metric="jaccard")),
-        index=sample_ids, columns=sample_ids,
+        index=sample_ids,
+        columns=sample_ids,
     )
 
     bray_df.to_csv(output_path / "beta_div_bray.csv")
@@ -89,14 +93,27 @@ def calc_beta_div(df, output_path, rarefaction_depth, seed=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calculate α & β-diversities.")
-    parser.add_argument("-i", "--input", required=True,
-                        help="Input total count table CSV (species level).")
-    parser.add_argument("-o", "--output", required=True,
-                        help="Output directory path.")
-    parser.add_argument("-d", "--depth", type=int, default=1000,
-                        help="Rarefaction depth for β diversity (default: 1000).")
-    parser.add_argument("-s", "--seed", type=int, default=None,
-                        help="Random seed for reproducible rarefaction (default: random).")
+    parser.add_argument(
+        "-i",
+        "--input",
+        required=True,
+        help="Input total count table CSV (species level).",
+    )
+    parser.add_argument("-o", "--output", required=True, help="Output directory path.")
+    parser.add_argument(
+        "-d",
+        "--depth",
+        type=int,
+        default=1000,
+        help="Rarefaction depth for β diversity (default: 1000).",
+    )
+    parser.add_argument(
+        "-s",
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed for reproducible rarefaction (default: random).",
+    )
     args = parser.parse_args()
 
     input_file = Path(args.input)

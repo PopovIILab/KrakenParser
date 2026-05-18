@@ -6,13 +6,12 @@ import itertools
 import pandas as pd
 import pytest
 
-from krakenparser.mpa.transform2mpa import kreport_to_mpa
 from krakenparser.counts.convert2csv import convert_to_csv
 from krakenparser.counts.processing_script import process_files
 from krakenparser.counts.split_mpa import split_mpa
-from krakenparser.stats.relabund import calculate_rel_abund
+from krakenparser.mpa.transform2mpa import kreport_to_mpa
 from krakenparser.stats.diversity import calc_alpha_div, calc_beta_div
-
+from krakenparser.stats.relabund import calculate_rel_abund
 
 SAMPLE_COMBINED_MPA = (
     "#Classification\tsample1\tsample2\n"
@@ -37,6 +36,7 @@ def combined_mpa_file(tmp_path):
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _sha256(path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -44,6 +44,7 @@ def _sha256(path) -> str:
 # ---------------------------------------------------------------------------
 # kreport_to_mpa
 # ---------------------------------------------------------------------------
+
 
 def test_kreport_to_mpa_reproducible(kreport_file, tmp_path):
     counter = itertools.count()
@@ -99,6 +100,7 @@ def test_kreport_to_mpa_paths_are_hierarchical(kreport_file, tmp_path):
 # convert_to_csv
 # ---------------------------------------------------------------------------
 
+
 def test_convert_to_csv_reproducible(counts_txt_file, tmp_path):
     counter = itertools.count()
 
@@ -124,6 +126,7 @@ def test_convert_to_csv_transposes_correctly(counts_txt_file, tmp_path):
 # process_files
 # ---------------------------------------------------------------------------
 
+
 def test_process_files_adds_header_and_cleans_names(tmp_path):
     source = tmp_path / "COMBINED.txt"
     source.write_text(
@@ -132,8 +135,7 @@ def test_process_files_adds_header_and_cleans_names(tmp_path):
     )
     dest = tmp_path / "counts_species.txt"
     dest.write_text(
-        "s__Pseudomonas_aeruginosa\t300\t100\n"
-        "s__Escherichia_coli\t200\t50\n"
+        "s__Pseudomonas_aeruginosa\t300\t100\ns__Escherichia_coli\t200\t50\n"
     )
     process_files(str(source), str(dest))
     result = dest.read_text()
@@ -151,7 +153,9 @@ def test_process_files_reproducible(tmp_path):
         dest = tmp_path / f"counts_{i}.txt"
         dest.write_text("s__Some_species\t10\n")
         process_files(str(source), str(dest))
-    assert (tmp_path / "counts_0.txt").read_text() == (tmp_path / "counts_1.txt").read_text()
+    assert (tmp_path / "counts_0.txt").read_text() == (
+        tmp_path / "counts_1.txt"
+    ).read_text()
 
 
 def test_process_files_missing_source_raises(tmp_path):
@@ -176,6 +180,7 @@ def test_convert_to_csv_missing_input_raises(tmp_path):
 # ---------------------------------------------------------------------------
 # calculate_rel_abund
 # ---------------------------------------------------------------------------
+
 
 def test_relabund_reproducible(counts_csv_file, tmp_path):
     counter = itertools.count()
@@ -220,6 +225,7 @@ def test_relabund_missing_input_raises(tmp_path):
 # calc_alpha_div
 # ---------------------------------------------------------------------------
 
+
 def test_alpha_div_reproducible(counts_csv_file, tmp_path):
     df = pd.read_csv(counts_csv_file, index_col=0)
     counter = itertools.count()
@@ -256,6 +262,7 @@ def test_alpha_div_shannon_non_negative(counts_csv_file, tmp_path):
 # calc_beta_div
 # ---------------------------------------------------------------------------
 
+
 def test_beta_div_output_files_exist(counts_csv_file, tmp_path):
     df = pd.read_csv(counts_csv_file, index_col=0)
     out_dir = tmp_path / "diversity"
@@ -281,13 +288,12 @@ def test_beta_div_diagonal_is_zero(counts_csv_file, tmp_path):
     calc_beta_div(df, out_dir, rarefaction_depth=1000)
     bray = pd.read_csv(out_dir / "beta_div_bray.csv", index_col=0)
     import numpy as np
+
     assert np.allclose(np.diag(bray.values), 0.0)
 
 
 def test_beta_div_too_few_samples_raises(tmp_path):
-    df = pd.DataFrame(
-        {"Taxon_A": [100], "Taxon_B": [200]}, index=["S1"]
-    )
+    df = pd.DataFrame({"Taxon_A": [100], "Taxon_B": [200]}, index=["S1"])
     out_dir = tmp_path / "diversity"
     out_dir.mkdir()
     with pytest.raises(ValueError, match="rarefaction"):
@@ -297,6 +303,7 @@ def test_beta_div_too_few_samples_raises(tmp_path):
 # ---------------------------------------------------------------------------
 # split_mpa
 # ---------------------------------------------------------------------------
+
 
 def test_split_mpa_creates_all_rank_files(combined_mpa_file, tmp_path):
     split_mpa(str(combined_mpa_file), str(tmp_path))

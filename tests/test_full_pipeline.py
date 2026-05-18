@@ -1,7 +1,8 @@
-import zipfile
 import shutil
-import pytest
+import zipfile
 from pathlib import Path
+
+import pytest
 
 from krakenparser.pipeline import run_pipeline
 

@@ -1,0 +1,4 @@
+coverage:
+  patch:
+    target: 78%
+    informational: true

@@ -7,7 +7,6 @@ Replaces decombine.sh and decombine_viruses.sh.
 import argparse
 import logging
 import re
-import sys
 from pathlib import Path
 
 _log = logging.getLogger(__name__)
@@ -15,20 +14,20 @@ _log = logging.getLogger(__name__)
 
 _RANKS = [
     ("species", "s__", []),
-    ("genus",   "g__", ["s__"]),
-    ("family",  "f__", ["s__", "g__"]),
-    ("order",   "o__", ["s__", "g__", "f__"]),
-    ("class",   "c__", ["s__", "g__", "f__", "o__"]),
-    ("phylum",  "p__", ["s__", "g__", "f__", "o__", "c__"]),
+    ("genus", "g__", ["s__"]),
+    ("family", "f__", ["s__", "g__"]),
+    ("order", "o__", ["s__", "g__", "f__"]),
+    ("class", "c__", ["s__", "g__", "f__", "o__"]),
+    ("phylum", "p__", ["s__", "g__", "f__", "o__", "c__"]),
 ]
 
 _HUMAN_TAXA = {
     "species": "s__Homo_sapiens",
-    "genus":   "g__Homo",
-    "family":  "f__Hominidae",
-    "order":   "o__Primates",
-    "class":   "c__Mammalia",
-    "phylum":  "p__Chordata",
+    "genus": "g__Homo",
+    "family": "f__Hominidae",
+    "order": "o__Primates",
+    "class": "c__Mammalia",
+    "phylum": "p__Chordata",
 }
 
 _ACCESSION_RE = re.compile(r"(SRS|SRR|SRX|ERS|ERR|ERX|DRS|DRR|DRX)\d*-")
@@ -41,7 +40,7 @@ def _strip_path_prefix(line: str) -> str:
         return line
     path, rest = line[:tab], line[tab:]
     pipe = path.rfind("|")
-    segment = path[pipe + 1:] if pipe != -1 else path
+    segment = path[pipe + 1 :] if pipe != -1 else path
     return _ACCESSION_RE.sub("", segment + rest)
 
 
@@ -105,7 +104,12 @@ def main() -> None:
         help="Do not filter human-related taxa (default: filtered)",
     )
     args = parser.parse_args()
-    split_mpa(args.input, args.output, viruses_only=args.viruses_only, keep_human=args.keep_human)
+    split_mpa(
+        args.input,
+        args.output,
+        viruses_only=args.viruses_only,
+        keep_human=args.keep_human,
+    )
 
 
 if __name__ == "__main__":

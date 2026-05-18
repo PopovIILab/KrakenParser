@@ -11,13 +11,13 @@ _log = logging.getLogger(__name__)
 
 import pandas as pd
 
-from krakenparser.mpa.transform2mpa import kreport_to_mpa
-from krakenparser.mpa.mpa_table import combine_mpa
-from krakenparser.counts.split_mpa import split_mpa
-from krakenparser.counts.processing_script import process_files
 from krakenparser.counts.convert2csv import convert_to_csv
-from krakenparser.stats.relabund import calculate_rel_abund
+from krakenparser.counts.processing_script import process_files
+from krakenparser.counts.split_mpa import split_mpa
+from krakenparser.mpa.mpa_table import combine_mpa
+from krakenparser.mpa.transform2mpa import kreport_to_mpa
 from krakenparser.stats.diversity import calc_alpha_div, calc_beta_div
+from krakenparser.stats.relabund import calculate_rel_abund
 
 
 def _is_processable(path: Path) -> bool:
@@ -124,36 +124,49 @@ def run_pipeline(
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    parser = argparse.ArgumentParser(
-        description="Run the full KrakenParser pipeline."
-    )
+    parser = argparse.ArgumentParser(description="Run the full KrakenParser pipeline.")
     parser.add_argument(
-        "-i", "--input", required=True,
+        "-i",
+        "--input",
+        required=True,
         help="Directory containing Kraken2 report files",
     )
     parser.add_argument(
-        "-o", "--output", default=None,
+        "-o",
+        "--output",
+        default=None,
         help="Output directory (default: parent of input)",
     )
     parser.add_argument(
-        "--keep-human", action="store_true", default=False,
+        "--keep-human",
+        action="store_true",
+        default=False,
         help="Do not filter human-related taxa (default: filtered)",
     )
     parser.add_argument(
-        "-d", "--depth", type=int, default=1000,
+        "-d",
+        "--depth",
+        type=int,
+        default=1000,
         help="Rarefaction depth for β-diversity (default: 1000)",
     )
     parser.add_argument(
-        "-s", "--seed", type=int, default=None,
+        "-s",
+        "--seed",
+        type=int,
+        default=None,
         help="Random seed for reproducible rarefaction (default: random)",
     )
     parser.add_argument(
-        "--overwrite", action="store_true", default=False,
+        "--overwrite",
+        action="store_true",
+        default=False,
         help="Overwrite the output directory if it already exists",
     )
     args = parser.parse_args()
     run_pipeline(
-        args.input, args.output,
+        args.input,
+        args.output,
         keep_human=args.keep_human,
         rarefaction_depth=args.depth,
         seed=args.seed,

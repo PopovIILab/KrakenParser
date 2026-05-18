@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
+import argparse
 import logging
 import warnings
-import argparse
 from pathlib import Path
+
 import pandas as pd
 
 _log = logging.getLogger(__name__)
@@ -59,9 +60,7 @@ def calculate_rel_abund(input_file, output_file, other_threshold=None):
 
     # Save to CSV
     result.to_csv(output_file, index=False)
-    _log.info(
-        "Relative abundance saved as '%s'.", output_file
-    )
+    _log.info("Relative abundance saved as '%s'.", output_file)
 
 
 if __name__ == "__main__":
