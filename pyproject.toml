@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "krakenparser"
-version = "1.0.0"
+version = "1.0.1"
 description = "A collection of scripts designed to process Kraken2 reports and convert them into CSV format."
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
