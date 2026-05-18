@@ -2,23 +2,22 @@
 
 import math
 
-import numpy as np
 import pytest
 
+from krakenparser.counts.processing_script import modify_taxa_names
 from krakenparser.mpa.transform2mpa import _parse_line
 from krakenparser.stats.diversity import chao1_index, pielou_evenness, shannon_index
-from krakenparser.counts.processing_script import modify_taxa_names
-
 
 # ---------------------------------------------------------------------------
 # _parse_line
 # ---------------------------------------------------------------------------
 
+
 def test_parse_line_standard_rank():
     line = "50.00\t500000\t100000\tP\t1224\t    Pseudomonadota\n"
     name, depth, rank, cum_reads, pct = _parse_line(line)
     assert name == "Pseudomonadota"
-    assert depth == 2       # 4 leading spaces // 2
+    assert depth == 2  # 4 leading spaces // 2
     assert rank == "P"
     assert cum_reads == 500000
     assert pct == 50.0
@@ -37,7 +36,7 @@ def test_parse_line_intermediate_rank():
     name, depth, rank, _, _ = _parse_line(line)
     assert name == "Some subspecies"
     assert rank == "S1"
-    assert depth == 5       # 10 spaces // 2
+    assert depth == 5  # 10 spaces // 2
 
 
 def test_parse_line_too_few_columns():
@@ -55,6 +54,7 @@ def test_parse_line_non_numeric_reads():
 # ---------------------------------------------------------------------------
 # shannon_index
 # ---------------------------------------------------------------------------
+
 
 def test_shannon_uniform_four_species():
     assert abs(shannon_index([1, 1, 1, 1]) - math.log(4)) < 1e-10
@@ -76,6 +76,7 @@ def test_shannon_two_equal_species():
 # pielou_evenness
 # ---------------------------------------------------------------------------
 
+
 def test_pielou_single_species_returns_nan():
     assert math.isnan(pielou_evenness([100]))
 
@@ -96,6 +97,7 @@ def test_pielou_range_zero_to_one():
 # ---------------------------------------------------------------------------
 # chao1_index
 # ---------------------------------------------------------------------------
+
 
 def test_chao1_f2_zero_uses_f1_formula():
     # F1=3, F2=0 → S_obs + F1*(F1-1)/2
@@ -120,6 +122,7 @@ def test_chao1_no_singletons():
 # ---------------------------------------------------------------------------
 # modify_taxa_names
 # ---------------------------------------------------------------------------
+
 
 def test_modify_taxa_names_strips_prefix_and_replaces_underscores():
     assert modify_taxa_names("s__Homo_sapiens\t100\t200") == "Homo sapiens\t100\t200"

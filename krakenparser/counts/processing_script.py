@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-import os
-import sys
-import tempfile
 import argparse
+import os
+import tempfile
 from pathlib import Path
 
 
@@ -11,7 +10,7 @@ def modify_taxa_names(line):
     prefixes = ["s__", "g__", "f__", "o__", "c__", "p__"]
     for prefix in prefixes:
         if line.startswith(prefix):
-            parts = line[len(prefix):].split("\t")
+            parts = line[len(prefix) :].split("\t")
             parts[0] = parts[0].replace("_", " ")
             return "\t".join(parts)
     return line

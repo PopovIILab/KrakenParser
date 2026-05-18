@@ -2,15 +2,15 @@
 
 import pytest
 
+from krakenparser.kpplot.base import KpPlotBase, aggregate_by_metadata
+from krakenparser.kpplot.clustermap import clustermap
 from krakenparser.kpplot.stackedbar import stacked_barplot
 from krakenparser.kpplot.streamgraph import streamgraph
-from krakenparser.kpplot.clustermap import clustermap
-from krakenparser.kpplot.base import KpPlotBase, aggregate_by_metadata
-
 
 # ---------------------------------------------------------------------------
 # Smoke tests — verify each plot function returns without error
 # ---------------------------------------------------------------------------
+
 
 def test_stackedbar_returns_kpplotbase(relabund_df):
     result = stacked_barplot(relabund_df)
@@ -31,6 +31,7 @@ def test_clustermap_returns_kpplotbase(relabund_df):
 # sample_order validation
 # ---------------------------------------------------------------------------
 
+
 def test_stackedbar_sample_order_missing_raises(relabund_df):
     with pytest.raises(ValueError, match="Samples missing"):
         stacked_barplot(relabund_df, sample_order=["S1", "S2", "GHOST"])
@@ -49,6 +50,7 @@ def test_clustermap_sample_order_missing_raises(relabund_df):
 # ---------------------------------------------------------------------------
 # cmap validation (stackedbar / streamgraph)
 # ---------------------------------------------------------------------------
+
 
 def test_stackedbar_cmap_too_short_raises(relabund_df):
     with pytest.raises(ValueError, match="cmap"):
@@ -74,13 +76,16 @@ def test_streamgraph_cmap_invalid_type_raises(relabund_df):
 # aggregate_by_metadata
 # ---------------------------------------------------------------------------
 
+
 def test_aggregate_by_metadata_basic(relabund_df):
     import pandas as pd
 
-    metadata = pd.DataFrame({
-        "Sample_id": ["S1", "S2"],
-        "Group": ["A", "A"],
-    })
+    metadata = pd.DataFrame(
+        {
+            "Sample_id": ["S1", "S2"],
+            "Group": ["A", "A"],
+        }
+    )
     result = aggregate_by_metadata(relabund_df, metadata, "Group")
     assert "Sample_id" in result.columns
     assert set(result["Sample_id"]) == {"A"}

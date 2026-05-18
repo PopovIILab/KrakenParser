@@ -1,7 +1,9 @@
-import pandas as pd
+from typing import List, Optional, Tuple
+
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
-from typing import Optional, Tuple, Union, List
+
 from .base import KpPlotBase, aggregate_by_metadata
 
 

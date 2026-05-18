@@ -1,9 +1,11 @@
 import argparse
 import logging
 import subprocess
-from pathlib import Path
 import sys
-from importlib.metadata import version as _pkg_version, PackageNotFoundError as _PNF
+from importlib.metadata import PackageNotFoundError as _PNF
+from importlib.metadata import version as _pkg_version
+from pathlib import Path
+
 try:
     __version__ = _pkg_version("krakenparser")
 except _PNF:
@@ -78,15 +80,18 @@ def main():
 
     # Map flags to (script_path, base_args_to_prepend)
     command_map = {
-        "complete":           (package_dir / "pipeline.py",                      []),
-        "kreport2mpa":        (package_dir / "mpa" / "transform2mpa.py",         []),
-        "combine_mpa":        (package_dir / "mpa" / "mpa_table.py",             []),
-        "deconstruct":        (package_dir / "counts" / "split_mpa.py",          []),
-        "deconstruct_viruses":(package_dir / "counts" / "split_mpa.py",          ["--viruses-only"]),
-        "process":            (package_dir / "counts" / "processing_script.py",  []),
-        "txt2csv":            (package_dir / "counts" / "convert2csv.py",        []),
-        "relabund":           (package_dir / "stats" / "relabund.py",            []),
-        "diversity":          (package_dir / "stats" / "diversity.py",           []),
+        "complete": (package_dir / "pipeline.py", []),
+        "kreport2mpa": (package_dir / "mpa" / "transform2mpa.py", []),
+        "combine_mpa": (package_dir / "mpa" / "mpa_table.py", []),
+        "deconstruct": (package_dir / "counts" / "split_mpa.py", []),
+        "deconstruct_viruses": (
+            package_dir / "counts" / "split_mpa.py",
+            ["--viruses-only"],
+        ),
+        "process": (package_dir / "counts" / "processing_script.py", []),
+        "txt2csv": (package_dir / "counts" / "convert2csv.py", []),
+        "relabund": (package_dir / "stats" / "relabund.py", []),
+        "diversity": (package_dir / "stats" / "diversity.py", []),
     }
 
     if "-h" in sys.argv or "--help" in sys.argv:
@@ -94,7 +99,9 @@ def main():
             parser.print_help()
             return
 
-    def _build_cmd(script: Path, base_args: list[str], user_args: list[str]) -> list[str]:
+    def _build_cmd(
+        script: Path, base_args: list[str], user_args: list[str]
+    ) -> list[str]:
         if script.suffix == ".py":
             # Run as module (-m) so the krakenparser package stays importable.
             # Derive dotted module name from path relative to the package root.
@@ -113,7 +120,9 @@ def main():
     # Default to full pipeline when -i/--input is given without a subcommand
     if "-i" in extra_args or "--input" in extra_args:
         complete_script, complete_base = command_map["complete"]
-        subprocess.run(_build_cmd(complete_script, complete_base, extra_args), check=True)
+        subprocess.run(
+            _build_cmd(complete_script, complete_base, extra_args), check=True
+        )
         return
 
     parser.print_help()

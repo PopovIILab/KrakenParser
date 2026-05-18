@@ -8,8 +8,14 @@ from pathlib import Path
 
 # Maps Kraken2 single-letter rank codes to MPA prefixes
 _RANK_PREFIX = {
-    "D": "d", "K": "k", "P": "p", "C": "c",
-    "O": "o", "F": "f", "G": "g", "S": "s",
+    "D": "d",
+    "K": "k",
+    "P": "p",
+    "C": "c",
+    "O": "o",
+    "F": "f",
+    "G": "g",
+    "S": "s",
 }
 
 
@@ -96,9 +102,7 @@ def kreport_to_mpa(
 
             # Build the full MPA path; omit intermediate (x__) segments when not requested
             path = "|".join(
-                seg
-                for (_, seg, std) in stack
-                if include_intermediate or std
+                seg for (_, seg, std) in stack if include_intermediate or std
             )
 
             value = str(cum_reads) if use_reads else str(pct)
@@ -112,55 +116,71 @@ def main() -> None:
 
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument(
-        "-r", "--report-file", "--report",
+        "-r",
+        "--report-file",
+        "--report",
         dest="r_file",
         help="Single input Kraken2 report file",
     )
     mode.add_argument(
-        "-i", "--input",
+        "-i",
+        "--input",
         dest="input_dir",
         help="Input directory containing Kraken2 report files (batch mode)",
     )
 
     parser.add_argument(
-        "-o", "--output",
-        required=True, dest="o_file",
+        "-o",
+        "--output",
+        required=True,
+        dest="o_file",
         help="Output MPA file (single mode) or output directory (batch mode)",
     )
     parser.add_argument(
         "--display-header",
-        action="store_true", dest="add_header", default=False,
+        action="store_true",
+        dest="add_header",
+        default=False,
         help="Write a header line with the sample name (filename)",
     )
     parser.add_argument(
         "--read_count",
-        action="store_true", dest="use_reads", default=True,
+        action="store_true",
+        dest="use_reads",
+        default=True,
         help="Output clade read counts [default]",
     )
     parser.add_argument(
         "--percentages",
-        action="store_false", dest="use_reads",
+        action="store_false",
+        dest="use_reads",
         help="Output percentages instead of read counts",
     )
     parser.add_argument(
         "--intermediate-ranks",
-        action="store_true", dest="x_include", default=False,
+        action="store_true",
+        dest="x_include",
+        default=False,
         help="Include non-standard taxonomic ranks in output",
     )
     parser.add_argument(
         "--no-intermediate-ranks",
-        action="store_false", dest="x_include",
+        action="store_false",
+        dest="x_include",
         help="Exclude non-standard taxonomic ranks [default]",
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--remove-spaces",
-        action="store_true", dest="remove_spaces", default=True,
+        action="store_true",
+        dest="remove_spaces",
+        default=True,
         help="Replace spaces with underscores in taxon names [default]",
     )
     group.add_argument(
         "--keep-spaces",
-        action="store_false", dest="remove_spaces",
+        action="store_false",
+        dest="remove_spaces",
         help="Keep spaces in taxon names",
     )
     args = parser.parse_args()

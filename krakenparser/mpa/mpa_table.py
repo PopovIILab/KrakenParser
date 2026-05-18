@@ -53,13 +53,18 @@ def main() -> None:
         description="Combine MPA files into a single tab-delimited table."
     )
     parser.add_argument(
-        "-i", "--input",
-        required=True, nargs="+", dest="in_files",
+        "-i",
+        "--input",
+        required=True,
+        nargs="+",
+        dest="in_files",
         help="Input MPA files (one per sample)",
     )
     parser.add_argument(
-        "-o", "--output",
-        required=True, dest="o_file",
+        "-o",
+        "--output",
+        required=True,
+        dest="o_file",
         help="Output merged MPA file",
     )
     args = parser.parse_args()

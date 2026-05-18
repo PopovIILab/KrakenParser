@@ -1,8 +1,10 @@
-import pandas as pd
+from typing import List, Optional, Tuple, Union
+
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
-from typing import Optional, Tuple, Union, List
+import pandas as pd
+import seaborn as sns
+
 from .base import KpPlotBase, aggregate_by_metadata
 
 

@@ -1,9 +1,9 @@
 import matplotlib
+
 matplotlib.use("Agg")
 
 import pandas as pd
 import pytest
-
 
 SAMPLE_KREPORT = (
     "99.98\t999980\t0\tR\t1\troot\n"
@@ -43,12 +43,14 @@ def counts_txt_file(tmp_path):
 
 @pytest.fixture
 def counts_csv_file(tmp_path):
-    df = pd.DataFrame({
-        "Sample_id": ["S1", "S2"],
-        "Pseudomonas aeruginosa": [300000, 100000],
-        "Escherichia coli": [200000, 50000],
-        "Bacteroides fragilis": [100000, 200000],
-    })
+    df = pd.DataFrame(
+        {
+            "Sample_id": ["S1", "S2"],
+            "Pseudomonas aeruginosa": [300000, 100000],
+            "Escherichia coli": [200000, 50000],
+            "Bacteroides fragilis": [100000, 200000],
+        }
+    )
     f = tmp_path / "counts_species.csv"
     df.to_csv(f, index=False)
     return f
@@ -56,11 +58,17 @@ def counts_csv_file(tmp_path):
 
 @pytest.fixture
 def relabund_df():
-    return pd.DataFrame({
-        "Sample_id": ["S1", "S1", "S1", "S2", "S2", "S2"],
-        "taxon": [
-            "Pseudomonadota", "Bacillota", "Other (<4.0%)",
-            "Pseudomonadota", "Bacillota", "Other (<4.0%)",
-        ],
-        "rel_abund_perc": [70.0, 20.0, 10.0, 50.0, 35.0, 15.0],
-    })
+    return pd.DataFrame(
+        {
+            "Sample_id": ["S1", "S1", "S1", "S2", "S2", "S2"],
+            "taxon": [
+                "Pseudomonadota",
+                "Bacillota",
+                "Other (<4.0%)",
+                "Pseudomonadota",
+                "Bacillota",
+                "Other (<4.0%)",
+            ],
+            "rel_abund_perc": [70.0, 20.0, 10.0, 50.0, 35.0, 15.0],
+        }
+    )
