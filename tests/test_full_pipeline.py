@@ -61,8 +61,8 @@ def test_pipeline_overwrite_protection(demo_run):
 
     run_pipeline(str(kreports_path))
 
-    # Second run without --overwrite must exit
-    with pytest.raises(SystemExit):
+    # Second run without --overwrite must raise (library function, not sys.exit)
+    with pytest.raises(FileExistsError):
         run_pipeline(str(kreports_path))
 
 
