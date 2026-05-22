@@ -7,8 +7,6 @@ import shutil
 import sys
 from pathlib import Path
 
-_log = logging.getLogger(__name__)
-
 import pandas as pd
 
 from krakenparser.counts.convert2csv import convert_to_csv
@@ -18,6 +16,8 @@ from krakenparser.mpa.mpa_table import combine_mpa
 from krakenparser.mpa.transform2mpa import kreport_to_mpa
 from krakenparser.stats.diversity import calc_alpha_div, calc_beta_div
 from krakenparser.stats.relabund import calculate_rel_abund
+
+_log = logging.getLogger(__name__)
 
 
 def _is_processable(path: Path) -> bool:
