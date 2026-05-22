@@ -61,30 +61,31 @@ def calc_alpha_div(df, output_path):
 
 def calc_beta_div(df, output_path, rarefaction_depth, seed=None):
     rng = np.random.default_rng(seed)
-    rarefied_counts = []
-    sample_ids = []
+    rarefied_counts: list[np.ndarray] = []
+    sample_ids: list[str] = []
 
     for sample, row in df.iterrows():
         counts = np.round(row.values).astype(int)
         if counts.sum() >= rarefaction_depth:
             rarefied = _subsample_counts(counts, n=rarefaction_depth, rng=rng)
             rarefied_counts.append(rarefied)
-            sample_ids.append(sample)
+            sample_ids.append(str(sample))
 
     if len(rarefied_counts) < 2:
         raise ValueError("Not enough samples passed the rarefaction threshold.")
 
     X = np.array(rarefied_counts, dtype=float)
+    idx = pd.Index(sample_ids)
 
     bray_df = pd.DataFrame(
         squareform(pdist(X, metric="braycurtis")),
-        index=sample_ids,
-        columns=sample_ids,
+        index=idx,
+        columns=idx,
     )
     jaccard_df = pd.DataFrame(
         squareform(pdist(X.astype(bool).astype(float), metric="jaccard")),
-        index=sample_ids,
-        columns=sample_ids,
+        index=idx,
+        columns=idx,
     )
 
     bray_df.to_csv(output_path / "beta_div_bray.csv")
