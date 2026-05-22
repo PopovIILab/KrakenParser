@@ -9,7 +9,9 @@ import pytest
 from krakenparser.counts.convert2csv import convert_to_csv
 from krakenparser.counts.processing_script import process_files
 from krakenparser.counts.split_mpa import split_mpa
+from krakenparser.mpa.mpa_table import combine_mpa
 from krakenparser.mpa.transform2mpa import kreport_to_mpa
+from krakenparser.pipeline import _is_processable
 from krakenparser.stats.diversity import calc_alpha_div, calc_beta_div
 from krakenparser.stats.relabund import calculate_rel_abund
 
@@ -361,3 +363,130 @@ def test_split_mpa_genus_excludes_species_lines(combined_mpa_file, tmp_path):
 def test_split_mpa_missing_input_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         split_mpa(str(tmp_path / "ghost.txt"), str(tmp_path / "out"))
+
+
+# ---------------------------------------------------------------------------
+# auto-create output directories (ensure_output_dir behaviour)
+# ---------------------------------------------------------------------------
+
+
+def test_kreport_to_mpa_creates_output_dir(kreport_file, tmp_path):
+    out = tmp_path / "new_subdir" / "out.MPA.TXT"
+    kreport_to_mpa(str(kreport_file), str(out))
+    assert out.exists()
+
+
+def test_kreport_to_mpa_missing_input_raises(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        kreport_to_mpa(str(tmp_path / "ghost.kreport"), str(tmp_path / "out.MPA.TXT"))
+
+
+def test_convert_to_csv_creates_output_dir(counts_txt_file, tmp_path):
+    out = tmp_path / "new_subdir" / "counts.csv"
+    convert_to_csv(str(counts_txt_file), str(out))
+    assert out.exists()
+
+
+def test_relabund_creates_output_dir(counts_csv_file, tmp_path):
+    out = tmp_path / "new_subdir" / "ra.csv"
+    calculate_rel_abund(str(counts_csv_file), str(out))
+    assert out.exists()
+
+
+def test_alpha_div_creates_output_dir(counts_csv_file, tmp_path):
+    df = pd.read_csv(counts_csv_file, index_col=0)
+    out_dir = tmp_path / "new_dir" / "nested"
+    calc_alpha_div(df, out_dir)
+    assert (out_dir / "alpha_div.csv").exists()
+
+
+def test_beta_div_creates_output_dir(counts_csv_file, tmp_path):
+    df = pd.read_csv(counts_csv_file, index_col=0)
+    out_dir = tmp_path / "new_dir" / "nested"
+    calc_beta_div(df, out_dir, rarefaction_depth=1000, seed=42)
+    assert (out_dir / "beta_div_bray.csv").exists()
+
+
+# ---------------------------------------------------------------------------
+# combine_mpa — new input validation
+# ---------------------------------------------------------------------------
+
+SAMPLE_MPA_A = "#Classification\tsample1\nd__Bacteria|s__Pseudomonas_aeruginosa\t300\n"
+SAMPLE_MPA_B = "#Classification\tsample2\nd__Bacteria|s__Pseudomonas_aeruginosa\t100\n"
+
+
+def test_combine_mpa_creates_output_dir(tmp_path):
+    a = tmp_path / "a.MPA.TXT"
+    b = tmp_path / "b.MPA.TXT"
+    a.write_text(SAMPLE_MPA_A)
+    b.write_text(SAMPLE_MPA_B)
+    out = tmp_path / "new_subdir" / "COMBINED.txt"
+    combine_mpa([str(a), str(b)], str(out))
+    assert out.exists()
+
+
+def test_combine_mpa_missing_input_raises(tmp_path):
+    existing = tmp_path / "a.MPA.TXT"
+    existing.write_text(SAMPLE_MPA_A)
+    with pytest.raises(FileNotFoundError):
+        combine_mpa(
+            [str(existing), str(tmp_path / "ghost.MPA.TXT")], str(tmp_path / "out.txt")
+        )
+
+
+# ---------------------------------------------------------------------------
+# process_files — destination must already exist (in-place modifier)
+# ---------------------------------------------------------------------------
+
+
+def test_process_files_missing_dest_still_raises(tmp_path):
+    source = tmp_path / "COMBINED.txt"
+    source.write_text("#Classification\tsample1.kreport\n")
+    with pytest.raises(FileNotFoundError):
+        process_files(str(source), str(tmp_path / "nonexistent.txt"))
+
+
+# ---------------------------------------------------------------------------
+# split_mpa — t__ rank filter (intermediate terminal nodes)
+# ---------------------------------------------------------------------------
+
+
+def test_split_mpa_filters_terminal_rank_nodes(tmp_path):
+    combined = tmp_path / "COMBINED.txt"
+    combined.write_text(
+        "#Classification\tsample1\n"
+        "d__Bacteria|p__Pseudomonadota|s__Pseudomonas_aeruginosa\t300\n"
+        "d__Bacteria|p__Pseudomonadota|s__Pseudomonas_aeruginosa|t__strain_X\t10\n"
+    )
+    split_mpa(str(combined), str(tmp_path / "out"))
+    species = (tmp_path / "out" / "txt" / "counts_species.txt").read_text()
+    assert "t__" not in species
+
+
+# ---------------------------------------------------------------------------
+# _is_processable — hidden files, null bytes, non-UTF-8
+# ---------------------------------------------------------------------------
+
+
+def test_is_processable_hidden_file(tmp_path):
+    f = tmp_path / ".hidden"
+    f.write_text("content")
+    assert not _is_processable(f)
+
+
+def test_is_processable_null_bytes(tmp_path):
+    f = tmp_path / "binary.bin"
+    f.write_bytes(b"hello\x00world")
+    assert not _is_processable(f)
+
+
+def test_is_processable_non_utf8(tmp_path):
+    f = tmp_path / "latin1.txt"
+    f.write_bytes(b"\xff\xfe bad encoding")
+    assert not _is_processable(f)
+
+
+def test_is_processable_valid_kreport(tmp_path):
+    f = tmp_path / "sample.kreport"
+    f.write_text("50.0\t500\t100\tS\t1\tBacteria\n")
+    assert _is_processable(f)

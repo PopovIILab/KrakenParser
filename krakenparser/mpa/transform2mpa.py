@@ -2,9 +2,12 @@
 """Convert a Kraken2 report to MetaPhlAn (MPA) format."""
 
 import argparse
+import logging
 import os
 import sys
 from pathlib import Path
+
+from krakenparser.utils import ensure_output_dir
 
 # Maps Kraken2 single-letter rank codes to MPA prefixes
 _RANK_PREFIX = {
@@ -17,6 +20,8 @@ _RANK_PREFIX = {
     "G": "g",
     "S": "s",
 }
+
+_log = logging.getLogger(__name__)
 
 
 def _parse_line(line: str):
@@ -67,10 +72,13 @@ def kreport_to_mpa(
     depth d is encountered, all stack entries with depth >= d are popped
     before the new entry is pushed, keeping the path consistent.
     """
+    if not Path(report_path).is_file():
+        raise FileNotFoundError(f"Input file not found: {report_path}")
+    out_path = ensure_output_dir(output_path, is_file=True)
     # Stack entries: (structural_depth, mpa_segment, is_standard_rank)
     stack: list[tuple[int, str, bool]] = []
 
-    with open(report_path) as r_fh, open(output_path, "w") as o_fh:
+    with open(report_path) as r_fh, open(out_path, "w") as o_fh:
         if display_header:
             o_fh.write("#Classification\t" + os.path.basename(report_path) + "\n")
 
@@ -110,6 +118,7 @@ def kreport_to_mpa(
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(
         description="Convert a Kraken2 report to MetaPhlAn (MPA) format."
     )
@@ -203,7 +212,7 @@ def main() -> None:
                 continue
             out_name = f.name.replace(".kreport", ".MPA.TXT")
             kreport_to_mpa(str(f), str(output_dir / out_name), **kwargs)
-        print(f"Converted to MPA successfully. Output stored in {output_dir}")
+        _log.info(f"Converted to MPA successfully. Output stored in {output_dir}")
     else:
         kreport_to_mpa(args.r_file, args.o_file, **kwargs)
 

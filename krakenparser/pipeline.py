@@ -7,8 +7,6 @@ import shutil
 import sys
 from pathlib import Path
 
-_log = logging.getLogger(__name__)
-
 import pandas as pd
 
 from krakenparser.counts.convert2csv import convert_to_csv
@@ -18,6 +16,8 @@ from krakenparser.mpa.mpa_table import combine_mpa
 from krakenparser.mpa.transform2mpa import kreport_to_mpa
 from krakenparser.stats.diversity import calc_alpha_div, calc_beta_div
 from krakenparser.stats.relabund import calculate_rel_abund
+
+_log = logging.getLogger(__name__)
 
 
 def _is_processable(path: Path) -> bool:
@@ -47,7 +47,7 @@ def run_pipeline(
 ) -> None:
     source_dir = Path(input_dir)
     if not source_dir.is_dir():
-        sys.exit(f"Error: input directory not found: {source_dir}")
+        raise FileNotFoundError(f"Input directory not found: {source_dir}")
 
     out_dir = Path(output_dir) if output_dir else source_dir.parent
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -55,8 +55,8 @@ def run_pipeline(
     existing = [out_dir / d for d in _OUTPUT_SUBDIRS if (out_dir / d).exists()]
     if existing and not overwrite:
         names = ", ".join(d.name for d in existing)
-        sys.exit(
-            f"Error: output already exists in '{out_dir}' ({names}).\n"
+        raise FileExistsError(
+            f"Output already exists in '{out_dir}' ({names}).\n"
             "Use --overwrite to overwrite it."
         )
     if overwrite:
@@ -164,14 +164,17 @@ def main() -> None:
         help="Overwrite the output directory if it already exists",
     )
     args = parser.parse_args()
-    run_pipeline(
-        args.input,
-        args.output,
-        keep_human=args.keep_human,
-        rarefaction_depth=args.depth,
-        seed=args.seed,
-        overwrite=args.overwrite,
-    )
+    try:
+        run_pipeline(
+            args.input,
+            args.output,
+            keep_human=args.keep_human,
+            rarefaction_depth=args.depth,
+            seed=args.seed,
+            overwrite=args.overwrite,
+        )
+    except (FileNotFoundError, FileExistsError) as e:
+        sys.exit(f"Error: {e}")
 
 
 if __name__ == "__main__":

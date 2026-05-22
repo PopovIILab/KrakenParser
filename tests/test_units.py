@@ -1,12 +1,15 @@
 """Pure-function unit tests — no I/O, fully deterministic."""
 
 import math
+from pathlib import Path
 
 import pytest
 
 from krakenparser.counts.processing_script import modify_taxa_names
+from krakenparser.counts.split_mpa import _strip_path_prefix
 from krakenparser.mpa.transform2mpa import _parse_line
 from krakenparser.stats.diversity import chao1_index, pielou_evenness, shannon_index
+from krakenparser.utils import ensure_output_dir
 
 # ---------------------------------------------------------------------------
 # _parse_line
@@ -147,3 +150,52 @@ def test_modify_taxa_names_count_fields_not_modified():
     # Underscores in tab-separated count fields must be preserved
     result = modify_taxa_names("s__My_taxon\t1_000\t2_000")
     assert result == "My taxon\t1_000\t2_000"
+
+
+# ---------------------------------------------------------------------------
+# _strip_path_prefix
+# ---------------------------------------------------------------------------
+
+
+def test_strip_path_prefix_tab_less_line():
+    assert _strip_path_prefix("no_tab_here") == "no_tab_here"
+
+
+def test_strip_path_prefix_normal():
+    assert (
+        _strip_path_prefix("d__Bacteria|s__E_coli\t100\t200") == "s__E_coli\t100\t200"
+    )
+
+
+# ---------------------------------------------------------------------------
+# ensure_output_dir
+# ---------------------------------------------------------------------------
+
+
+def test_ensure_output_dir_file_creates_parent(tmp_path):
+    p = ensure_output_dir(tmp_path / "subdir" / "output.csv", is_file=True)
+    assert (tmp_path / "subdir").is_dir()
+    assert not p.exists()  # only the parent is created, not the file itself
+
+
+def test_ensure_output_dir_dir_creates_directory(tmp_path):
+    p = ensure_output_dir(tmp_path / "output_dir", is_file=False)
+    assert p.is_dir()
+
+
+def test_ensure_output_dir_nested_creates_all_parents(tmp_path):
+    p = ensure_output_dir(tmp_path / "a" / "b" / "c", is_file=False)
+    assert p.is_dir()
+
+
+def test_ensure_output_dir_returns_path_object(tmp_path):
+    p = ensure_output_dir(str(tmp_path / "out.csv"), is_file=True)
+    assert isinstance(p, Path)
+
+
+def test_ensure_output_dir_idempotent_for_existing_dir(tmp_path):
+    existing = tmp_path / "already_exists"
+    existing.mkdir()
+    p = ensure_output_dir(existing, is_file=False)
+    assert p == existing
+    assert p.is_dir()

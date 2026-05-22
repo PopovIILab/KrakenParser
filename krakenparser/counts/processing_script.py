@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
 import os
 import tempfile
 from pathlib import Path
+
+_log = logging.getLogger(__name__)
 
 
 def modify_taxa_names(line):
@@ -47,11 +50,11 @@ def process_files(source_file, destination_file):
         tmp_path = tmp.name
     os.replace(tmp_path, dest_path)
 
-    print(f"Processed {destination_file} successfully.")
+    _log.info(f"Processed {destination_file} successfully.")
 
 
-if __name__ == "__main__":
-    # Use argparse to parse command-line arguments
+def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(
         description="Reads a source file, processes its first line, modifies taxa names in a destination file, and updates it."
     )
@@ -67,8 +70,9 @@ if __name__ == "__main__":
         required=True,
         help="Path to the destination file. This file's contents will be updated with cleaned taxa names.",
     )
-
     args = parser.parse_args()
-
-    # Call the function with parsed arguments
     process_files(args.input, args.output)
+
+
+if __name__ == "__main__":
+    main()

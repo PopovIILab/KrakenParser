@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from krakenparser.utils import ensure_output_dir
+
 _log = logging.getLogger(__name__)
 
 
@@ -13,17 +15,15 @@ def convert_to_csv(input_file, output_file):
     in_path = Path(input_file)
     if not in_path.is_file():
         raise FileNotFoundError(f"Input file not found: {in_path}")
-    out_path = Path(output_file)
-    if not out_path.parent.exists():
-        raise FileNotFoundError(f"Output directory does not exist: {out_path.parent}")
+    out_path = ensure_output_dir(output_file, is_file=True)
 
     data = pd.read_csv(in_path, sep="\t", index_col=0)
     data.T.to_csv(out_path, index_label="Sample_id")
     _log.info("Data converted and saved as '%s'.", output_file)
 
 
-if __name__ == "__main__":
-    # Use argparse to handle command-line arguments
+def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(
         description="Reads a TXT file, reorganizes the data, and converts it into a CSV file."
     )
@@ -39,8 +39,9 @@ if __name__ == "__main__":
         required=True,
         help="Path to the output CSV file. The script will restructure the data and save it here.",
     )
-
     args = parser.parse_args()
-
-    # Call function with parsed arguments
     convert_to_csv(args.input, args.output)
+
+
+if __name__ == "__main__":
+    main()

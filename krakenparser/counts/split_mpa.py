@@ -9,6 +9,8 @@ import logging
 import re
 from pathlib import Path
 
+from krakenparser.utils import ensure_output_dir
+
 _log = logging.getLogger(__name__)
 
 
@@ -53,8 +55,8 @@ def split_mpa(
     in_path = Path(input_file)
     if not in_path.is_file():
         raise FileNotFoundError(f"Input file not found: {in_path}")
-    out_path = Path(output_dir)
-    (out_path / "txt").mkdir(parents=True, exist_ok=True)
+    out_path = ensure_output_dir(output_dir, is_file=False)
+    (out_path / "txt").mkdir(exist_ok=True)
 
     lines = in_path.read_text().splitlines()
     data_lines = [ln for ln in lines if not ln.startswith("#") and ln.strip()]
@@ -86,6 +88,7 @@ def split_mpa(
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(
         description="Split a combined MPA table into per-rank TXT files."
     )
