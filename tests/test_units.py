@@ -162,7 +162,9 @@ def test_strip_path_prefix_tab_less_line():
 
 
 def test_strip_path_prefix_normal():
-    assert _strip_path_prefix("d__Bacteria|s__E_coli\t100\t200") == "s__E_coli\t100\t200"
+    assert (
+        _strip_path_prefix("d__Bacteria|s__E_coli\t100\t200") == "s__E_coli\t100\t200"
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -33,7 +33,9 @@ _COMBINED_MPA = (
 
 def test_convert2csv_main(counts_txt_file, tmp_path, monkeypatch):
     out = tmp_path / "out.csv"
-    monkeypatch.setattr(sys, "argv", ["c2c", "-i", str(counts_txt_file), "-o", str(out)])
+    monkeypatch.setattr(
+        sys, "argv", ["c2c", "-i", str(counts_txt_file), "-o", str(out)]
+    )
     convert2csv_main()
     assert out.exists()
 
@@ -96,9 +98,7 @@ def test_mpa_table_main(tmp_path, monkeypatch):
     a.write_text(_MPA_A)
     b.write_text(_MPA_B)
     out = tmp_path / "COMBINED.txt"
-    monkeypatch.setattr(
-        sys, "argv", ["mt", "-i", str(a), str(b), "-o", str(out)]
-    )
+    monkeypatch.setattr(sys, "argv", ["mt", "-i", str(a), str(b), "-o", str(out)])
     mpa_table_main()
     assert out.exists()
 
@@ -110,9 +110,7 @@ def test_mpa_table_main(tmp_path, monkeypatch):
 
 def test_transform2mpa_main_single(kreport_file, tmp_path, monkeypatch):
     out = tmp_path / "out.MPA.TXT"
-    monkeypatch.setattr(
-        sys, "argv", ["t2m", "-r", str(kreport_file), "-o", str(out)]
-    )
+    monkeypatch.setattr(sys, "argv", ["t2m", "-r", str(kreport_file), "-o", str(out)])
     transform2mpa_main()
     assert out.exists()
 
@@ -139,7 +137,17 @@ def test_diversity_main_with_seed(counts_csv_file, tmp_path, monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
-        ["div", "-i", str(counts_csv_file), "-o", str(out_dir), "-d", "1000", "-s", "42"],
+        [
+            "div",
+            "-i",
+            str(counts_csv_file),
+            "-o",
+            str(out_dir),
+            "-d",
+            "1000",
+            "-s",
+            "42",
+        ],
     )
     diversity_main()
     assert (out_dir / "alpha_div.csv").exists()
@@ -148,7 +156,9 @@ def test_diversity_main_with_seed(counts_csv_file, tmp_path, monkeypatch):
 def test_diversity_main_no_seed(counts_csv_file, tmp_path, monkeypatch):
     out_dir = tmp_path / "div"
     monkeypatch.setattr(
-        sys, "argv", ["div", "-i", str(counts_csv_file), "-o", str(out_dir), "-d", "1000"]
+        sys,
+        "argv",
+        ["div", "-i", str(counts_csv_file), "-o", str(out_dir), "-d", "1000"],
     )
     diversity_main()
 

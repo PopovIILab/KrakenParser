@@ -133,7 +133,11 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    seed_label = str(args.seed) if args.seed is not None else "not set (results will vary between runs)"
+    seed_label = (
+        str(args.seed)
+        if args.seed is not None
+        else "not set (results will vary between runs)"
+    )
     _log.info("Rarefaction depth: %d | seed: %s", args.depth, seed_label)
 
     input_file = Path(args.input)

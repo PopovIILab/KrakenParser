@@ -429,7 +429,9 @@ def test_combine_mpa_missing_input_raises(tmp_path):
     existing = tmp_path / "a.MPA.TXT"
     existing.write_text(SAMPLE_MPA_A)
     with pytest.raises(FileNotFoundError):
-        combine_mpa([str(existing), str(tmp_path / "ghost.MPA.TXT")], str(tmp_path / "out.txt"))
+        combine_mpa(
+            [str(existing), str(tmp_path / "ghost.MPA.TXT")], str(tmp_path / "out.txt")
+        )
 
 
 # ---------------------------------------------------------------------------
