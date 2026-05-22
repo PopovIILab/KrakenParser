@@ -11,6 +11,7 @@ from krakenparser.counts.processing_script import process_files
 from krakenparser.counts.split_mpa import split_mpa
 from krakenparser.mpa.mpa_table import combine_mpa
 from krakenparser.mpa.transform2mpa import kreport_to_mpa
+from krakenparser.pipeline import _is_processable
 from krakenparser.stats.diversity import calc_alpha_div, calc_beta_div
 from krakenparser.stats.relabund import calculate_rel_abund
 
@@ -441,3 +442,49 @@ def test_process_files_missing_dest_still_raises(tmp_path):
     source.write_text("#Classification\tsample1.kreport\n")
     with pytest.raises(FileNotFoundError):
         process_files(str(source), str(tmp_path / "nonexistent.txt"))
+
+
+# ---------------------------------------------------------------------------
+# split_mpa — t__ rank filter (intermediate terminal nodes)
+# ---------------------------------------------------------------------------
+
+
+def test_split_mpa_filters_terminal_rank_nodes(tmp_path):
+    combined = tmp_path / "COMBINED.txt"
+    combined.write_text(
+        "#Classification\tsample1\n"
+        "d__Bacteria|p__Pseudomonadota|s__Pseudomonas_aeruginosa\t300\n"
+        "d__Bacteria|p__Pseudomonadota|s__Pseudomonas_aeruginosa|t__strain_X\t10\n"
+    )
+    split_mpa(str(combined), str(tmp_path / "out"))
+    species = (tmp_path / "out" / "txt" / "counts_species.txt").read_text()
+    assert "t__" not in species
+
+
+# ---------------------------------------------------------------------------
+# _is_processable — hidden files, null bytes, non-UTF-8
+# ---------------------------------------------------------------------------
+
+
+def test_is_processable_hidden_file(tmp_path):
+    f = tmp_path / ".hidden"
+    f.write_text("content")
+    assert not _is_processable(f)
+
+
+def test_is_processable_null_bytes(tmp_path):
+    f = tmp_path / "binary.bin"
+    f.write_bytes(b"hello\x00world")
+    assert not _is_processable(f)
+
+
+def test_is_processable_non_utf8(tmp_path):
+    f = tmp_path / "latin1.txt"
+    f.write_bytes(b"\xff\xfe bad encoding")
+    assert not _is_processable(f)
+
+
+def test_is_processable_valid_kreport(tmp_path):
+    f = tmp_path / "sample.kreport"
+    f.write_text("50.0\t500\t100\tS\t1\tBacteria\n")
+    assert _is_processable(f)

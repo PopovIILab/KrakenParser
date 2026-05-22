@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from krakenparser.counts.processing_script import modify_taxa_names
+from krakenparser.counts.split_mpa import _strip_path_prefix
 from krakenparser.mpa.transform2mpa import _parse_line
 from krakenparser.stats.diversity import chao1_index, pielou_evenness, shannon_index
 from krakenparser.utils import ensure_output_dir
@@ -149,6 +150,19 @@ def test_modify_taxa_names_count_fields_not_modified():
     # Underscores in tab-separated count fields must be preserved
     result = modify_taxa_names("s__My_taxon\t1_000\t2_000")
     assert result == "My taxon\t1_000\t2_000"
+
+
+# ---------------------------------------------------------------------------
+# _strip_path_prefix
+# ---------------------------------------------------------------------------
+
+
+def test_strip_path_prefix_tab_less_line():
+    assert _strip_path_prefix("no_tab_here") == "no_tab_here"
+
+
+def test_strip_path_prefix_normal():
+    assert _strip_path_prefix("d__Bacteria|s__E_coli\t100\t200") == "s__E_coli\t100\t200"
 
 
 # ---------------------------------------------------------------------------
