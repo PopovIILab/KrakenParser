@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from krakenparser.utils import ensure_output_dir
+
 _log = logging.getLogger(__name__)
 
 
@@ -14,9 +16,7 @@ def calculate_rel_abund(input_file, output_file, other_threshold=None):
     in_path = Path(input_file)
     if not in_path.is_file():
         raise FileNotFoundError(f"Input file not found: {in_path}")
-    out_path = Path(output_file)
-    if not out_path.parent.exists():
-        raise FileNotFoundError(f"Output directory does not exist: {out_path.parent}")
+    out_path = ensure_output_dir(output_file, is_file=True)
 
     # Load counts table
     df = pd.read_csv(in_path)
@@ -59,11 +59,12 @@ def calculate_rel_abund(input_file, output_file, other_threshold=None):
     )
 
     # Save to CSV
-    result.to_csv(output_file, index=False)
+    result.to_csv(out_path, index=False)
     _log.info("Relative abundance saved as '%s'.", output_file)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(
         description="Calculates taxa relative abundance and saves it to a CSV file."
     )
@@ -81,3 +82,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     calculate_rel_abund(args.input, args.output, args.other)
+
+
+if __name__ == "__main__":
+    main()

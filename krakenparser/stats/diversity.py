@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
+
+from krakenparser.utils import ensure_output_dir
+
+_log = logging.getLogger(__name__)
 
 
 def shannon_index(counts):
@@ -44,6 +49,7 @@ def _subsample_counts(
 
 
 def calc_alpha_div(df, output_path):
+    out_path = ensure_output_dir(output_path, is_file=False)
     results = []
     for sample_id, row in df.iterrows():
         counts = row.values
@@ -56,10 +62,15 @@ def calc_alpha_div(df, output_path):
             }
         )
     alpha_df = pd.DataFrame(results).set_index("Sample")
-    alpha_df.to_csv(output_path / "alpha_div.csv")
+    alpha_df.to_csv(out_path / "alpha_div.csv")
+
+    _log.info(
+        f"α-diversity has been successfully calculated and saved to '{output_path}'."
+    )
 
 
 def calc_beta_div(df, output_path, rarefaction_depth, seed=None):
+    out_path = ensure_output_dir(output_path, is_file=False)
     rng = np.random.default_rng(seed)
     rarefied_counts: list[np.ndarray] = []
     sample_ids: list[str] = []
@@ -88,11 +99,16 @@ def calc_beta_div(df, output_path, rarefaction_depth, seed=None):
         columns=idx,
     )
 
-    bray_df.to_csv(output_path / "beta_div_bray.csv")
-    jaccard_df.to_csv(output_path / "beta_div_jaccard.csv")
+    bray_df.to_csv(out_path / "beta_div_bray.csv")
+    jaccard_df.to_csv(out_path / "beta_div_jaccard.csv")
+
+    _log.info(
+        f"β-diversity has been successfully calculated and saved to '{output_path}'."
+    )
 
 
-if __name__ == "__main__":
+def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(description="Calculate α & β-diversities.")
     parser.add_argument(
         "-i",
@@ -117,6 +133,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    seed_label = str(args.seed) if args.seed is not None else "not set (results will vary between runs)"
+    _log.info("Rarefaction depth: %d | seed: %s", args.depth, seed_label)
+
     input_file = Path(args.input)
     if not input_file.is_file():
         sys.exit(f"Error: input file not found: {input_file}")
@@ -127,6 +146,7 @@ if __name__ == "__main__":
 
     calc_alpha_div(df, output_dir)
     calc_beta_div(df, output_dir, args.depth, seed=args.seed)
-    print(
-        f"α & β-diversities have been successfully calculated and saved to '{output_dir}'."
-    )
+
+
+if __name__ == "__main__":
+    main()
