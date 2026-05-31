@@ -9,51 +9,65 @@ from pathlib import Path
 
 from krakenparser.utils import ensure_output_dir
 
-# Maps Kraken2 single-letter rank codes to MPA prefixes
-_RANK_PREFIX = {
-    "D": "d",
-    "K": "k",
-    "P": "p",
-    "C": "c",
-    "O": "o",
-    "F": "f",
-    "G": "g",
-    "S": "s",
-}
-
 _log = logging.getLogger(__name__)
 
+_MAIN_LVLS = {"R", "K", "D", "P", "C", "O", "F", "G", "S"}
 
-def _parse_line(line: str):
+
+def _parse_line(line: str, remove_spaces: bool = False) -> list:
     """
     Parse one Kraken2 report line.
 
-    Standard format (6 columns):
-        pct  cum_reads  direct_reads  rank  taxid  name(indented)
-
-    Returns (name, depth, rank, cum_reads, pct) or None on malformed input.
+    Returns [name, level_num, level_type, all_reads, percents]
+    or empty list on malformed input.
     """
     parts = line.rstrip("\n").split("\t")
-    if len(parts) < 5:
-        return None
+    if len(parts) < 4:
+        return []
     try:
-        pct = float(parts[0])
-        cum_reads = int(parts[1])
+        int(parts[1])
     except ValueError:
-        return None
+        return []
 
-    rank = parts[3].strip()
-    name_field = parts[-1]  # always the last column regardless of format variant
+    try:
+        percents = float(parts[0])
+    except ValueError:
+        return []
+    all_reads = int(parts[1])
 
-    depth = 0
-    for ch in name_field:
+    try:
+        int(parts[-3])
+        level_type = parts[-2].strip()
+        map_kuniq = {
+            "species": "S",
+            "genus": "G",
+            "family": "F",
+            "order": "O",
+            "class": "C",
+            "phylum": "P",
+            "superkingdom": "D",
+            "kingdom": "K",
+        }
+        if level_type not in map_kuniq:
+            level_type = "-"
+        else:
+            level_type = map_kuniq[level_type]
+    except ValueError:
+        level_type = parts[-3].strip()
+
+    name = parts[-1]
+    spaces = 0
+    for ch in name:
         if ch == " ":
-            depth += 1
+            spaces += 1
         else:
             break
-    name = name_field.strip()
+    name = name.strip()
+    if remove_spaces:
+        name = name.replace(" ", "_")
 
-    return name, depth // 2, rank, cum_reads, pct
+    level_num = spaces / 2
+    return [name, level_num, level_type, all_reads, percents]
 
 
 def kreport_to_mpa(
@@ -67,54 +81,63 @@ def kreport_to_mpa(
     """
     Convert a single Kraken2 report to MPA format.
 
-    Uses a stack to track the current taxonomic path. Each entry is
-    (structural_depth, mpa_segment, is_standard_rank). When a node at
-    depth d is encountered, all stack entries with depth >= d are popped
-    before the new entry is pushed, keeping the path consistent.
+    Tracks the current taxonomic path via curr_path and prev_lvl_num,
+    popping the stack when moving back up the tree — exactly as the
+    original script does.
     """
     if not Path(report_path).is_file():
         raise FileNotFoundError(f"Input file not found: {report_path}")
     out_path = ensure_output_dir(output_path, is_file=True)
-    # Stack entries: (structural_depth, mpa_segment, is_standard_rank)
-    stack: list[tuple[int, str, bool]] = []
+
+    curr_path: list[str] = []
+    prev_lvl_num = -1
 
     with open(report_path) as r_fh, open(out_path, "w") as o_fh:
         if display_header:
             o_fh.write("#Classification\t" + os.path.basename(report_path) + "\n")
 
         for line in r_fh:
-            parsed = _parse_line(line)
-            if parsed is None:
-                continue
-            name, depth, rank, cum_reads, pct = parsed
-
-            # Skip unclassified and root — never appear in MPA output
-            if rank in ("U", "R"):
+            report_vals = _parse_line(line, remove_spaces)
+            if len(report_vals) < 5:
                 continue
 
-            # Strip numeric suffix to get base rank (e.g. "S1" → "S", "G2" → "G")
-            rank_base = rank.rstrip("0123456789")
-            is_standard = rank_base in _RANK_PREFIX and rank == rank_base
+            name, level_num, level_type, all_reads, percents = report_vals
 
-            if not is_standard and not include_intermediate:
+            # Пропускаем unclassified
+            if level_type == "U":
                 continue
 
-            prefix = _RANK_PREFIX.get(rank_base, "x")
-            seg_name = name.replace(" ", "_") if remove_spaces else name
-            mpa_seg = f"{prefix}__{seg_name}"
+            # Нормализуем тип уровня
+            if level_type not in _MAIN_LVLS:
+                level_type = "x"
+            elif level_type == "K":
+                level_type = "k"
+            elif level_type == "D":
+                level_type = "d"
 
-            # Trim stack to the current structural depth
-            while stack and stack[-1][0] >= depth:
-                stack.pop()
-            stack.append((depth, mpa_seg, is_standard))
+            level_str = level_type.lower() + "__" + name
 
-            # Build the full MPA path; omit intermediate (x__) segments when not requested
-            path = "|".join(
-                seg for (_, seg, std) in stack if include_intermediate or std
-            )
+            if prev_lvl_num == -1:
+                prev_lvl_num = level_num
+                curr_path.append(level_str)
+                continue
 
-            value = str(cum_reads) if use_reads else str(pct)
-            o_fh.write(f"{path}\t{value}\n")
+            while level_num != (prev_lvl_num + 1):
+                prev_lvl_num -= 1
+                curr_path.pop()
+
+            if (level_type == "x" and include_intermediate) or level_type != "x":
+                ancestors = [
+                    seg
+                    for seg in curr_path
+                    if (seg[0] != "x" or include_intermediate) and seg[0] != "r"
+                ]
+                path = "|".join(ancestors + [level_str])
+                value = str(all_reads) if use_reads else str(percents)
+                o_fh.write(path + "\t" + value + "\n")
+
+            curr_path.append(level_str)
+            prev_lvl_num = level_num
 
 
 def main() -> None:
@@ -137,7 +160,6 @@ def main() -> None:
         dest="input_dir",
         help="Input directory containing Kraken2 report files (batch mode)",
     )
-
     parser.add_argument(
         "-o",
         "--output",
@@ -212,7 +234,7 @@ def main() -> None:
                 continue
             out_name = f.name.replace(".kreport", ".MPA.TXT")
             kreport_to_mpa(str(f), str(output_dir / out_name), **kwargs)
-        _log.info(f"Converted to MPA successfully. Output stored in {output_dir}")
+        _log.info("Converted to MPA successfully. Output stored in %s", output_dir)
     else:
         kreport_to_mpa(args.r_file, args.o_file, **kwargs)
 
