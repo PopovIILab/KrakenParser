@@ -13,6 +13,7 @@ except _PNF:
 
 
 def main():
+    print("KrakenParser by Ilia V. Popov")
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     package_dir = Path(__file__).resolve().parent
 
@@ -219,7 +220,6 @@ def main():
         sys.exit(result.returncode)
 
     # Fallback to usage overview if no actionable arguments were provided
-    print("KrakenParser by Ilia V. Popov")
     parser.print_help()
 
 
