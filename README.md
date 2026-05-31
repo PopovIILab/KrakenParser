@@ -305,16 +305,17 @@ results/
 │  ├─ alpha_div.csv
 │  ├─ beta_div_bray.csv
 │  └─ beta_div_jaccard.csv
-└─ intermediate/           # Intermediate files
-   ├─ mpa/                 # Converted MPA files
-   │  ├─ {sample}.txt
-   │  ├─ ...
-   ├─ COMBINED.txt         # Merged MPA table
-   └─ txt/                 # Extracted taxonomic levels in TXT
-      ├─ counts_species.txt
-      ├─ counts_genus.txt
-      ├─ ...
-      └─ counts_phylum.txt
+├─ intermediate/           # Intermediate files
+│  ├─ mpa/                 # Converted MPA files
+│  │  ├─ {sample}.txt
+│  │  ├─ ...
+│  ├─ COMBINED.txt         # Merged MPA table
+│  └─ txt/                 # Extracted taxonomic levels in TXT
+│     ├─ counts_species.txt
+│     ├─ counts_genus.txt
+│     ├─ ...
+│     └─ counts_phylum.txt
+└─ krakenparser.log         # Pipeline execution logs
 ```
 
 ## Conclusion
