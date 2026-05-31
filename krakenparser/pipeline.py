@@ -41,6 +41,7 @@ def run_pipeline(
     input_dir: str,
     output_dir: str | None = None,
     keep_human: bool = False,
+    viruses_only: bool = False,
     rarefaction_depth: int = 1000,
     seed: int | None = None,
     overwrite: bool = False,
@@ -88,7 +89,12 @@ def run_pipeline(
     _log.info("MPA files combined. Output: %s", combined_file)
 
     # Part 3: split combined MPA by rank
-    split_mpa(str(combined_file), str(intermediate_dir), keep_human=keep_human)
+    split_mpa(
+        str(combined_file),
+        str(intermediate_dir),
+        keep_human=keep_human,
+        viruses_only=viruses_only,
+    )
     txt_dir = intermediate_dir / "txt"
 
     # Part 4: clean taxa names and add sample header
@@ -144,6 +150,12 @@ def main() -> None:
         help="Do not filter human-related taxa (default: filtered)",
     )
     parser.add_argument(
+        "--viruses",
+        action="store_true",
+        default=False,
+        help="Extract only Viruses domain taxa in the pipeline",
+    )
+    parser.add_argument(
         "-d",
         "--depth",
         type=int,
@@ -169,6 +181,7 @@ def main() -> None:
             args.input,
             args.output,
             keep_human=args.keep_human,
+            viruses_only=args.viruses,
             rarefaction_depth=args.depth,
             seed=args.seed,
             overwrite=args.overwrite,

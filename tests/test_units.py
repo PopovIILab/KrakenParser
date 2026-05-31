@@ -43,15 +43,15 @@ def test_parse_line_intermediate_rank():
 
 
 def test_parse_line_too_few_columns():
-    assert _parse_line("50.00\t500000\n") is None
+    assert _parse_line("50.00\t500000\n") == []
 
 
 def test_parse_line_non_numeric_pct():
-    assert _parse_line("not_a_float\t500000\t0\tP\t1224\tBacteria\n") is None
+    assert _parse_line("not_a_float\t500000\t0\tP\t1224\tBacteria\n") == []
 
 
 def test_parse_line_non_numeric_reads():
-    assert _parse_line("50.00\tnot_int\t0\tP\t1224\tBacteria\n") is None
+    assert _parse_line("50.00\tnot_int\t0\tP\t1224\tBacteria\n") == []
 
 
 # ---------------------------------------------------------------------------
