@@ -1,227 +1,199 @@
-import argparse
+#!/usr/bin/env python
+"""KrakenParser: Convert Kraken2 Reports to CSV and analyze microbial diversity.
+
+Built with native Typer subcommands while preserving a direct root interface
+for the full pipeline execution without the 'run' keyword.
+"""
+
 import logging
-import subprocess
 import sys
 from importlib.metadata import PackageNotFoundError as _PNF
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
+from typing import Optional
+
+import typer
+
+from krakenparser.counts.convert2csv import app as csv_app
+from krakenparser.counts.processing_script import app as process_app
+from krakenparser.counts.split_mpa import app as split_app
+from krakenparser.mpa.mpa_table import app as combine_app
+from krakenparser.mpa.transform2mpa import app as mpa_app
+from krakenparser.pipeline import run_pipeline
+from krakenparser.stats.diversity import app as diversity_app
+from krakenparser.stats.relabund import app as relabund_app
 
 try:
     __version__ = _pkg_version("krakenparser")
 except _PNF:
     __version__ = "unknown"
 
+app = typer.Typer(
+    add_completion=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
-def main():
-    print("KrakenParser by Ilia V. Popov")
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    package_dir = Path(__file__).resolve().parent
+PANEL_NAME = "Advanced (Step-by-step pipeline control)"
 
-    # Map of advanced steps for granular pipeline execution control
-    step_map = {
-        "mpa": (package_dir / "mpa" / "transform2mpa.py", []),
-        "combine": (package_dir / "mpa" / "mpa_table.py", []),
-        "split": (package_dir / "counts" / "split_mpa.py", []),
-        "process": (package_dir / "counts" / "processing_script.py", []),
-        "csv": (package_dir / "counts" / "convert2csv.py", []),
-        "relabund": (package_dir / "stats" / "relabund.py", []),
-        "diversity": (package_dir / "stats" / "diversity.py", []),
-    }
+app.add_typer(mpa_app, name="mpa", rich_help_panel=PANEL_NAME)
+app.add_typer(combine_app, name="combine", rich_help_panel=PANEL_NAME)
+app.add_typer(split_app, name="split", rich_help_panel=PANEL_NAME)
+app.add_typer(process_app, name="process", rich_help_panel=PANEL_NAME)
+app.add_typer(csv_app, name="csv", rich_help_panel=PANEL_NAME)
+app.add_typer(relabund_app, name="relabund", rich_help_panel=PANEL_NAME)
+app.add_typer(diversity_app, name="diversity", rich_help_panel=PANEL_NAME)
 
-    def _build_cmd(
-        script: Path, base_args: list[str], user_args: list[str]
-    ) -> list[str]:
-        if script.suffix == ".py":
-            # Execute as module to preserve relative imports within the package
-            module = ".".join(
-                script.relative_to(package_dir.parent).with_suffix("").parts
-            )
-            return [sys.executable, "-m", module] + base_args + user_args
-        return [str(script)] + base_args + user_args
 
-    # -------------------------------------------------------------------------
-    # 1. Intercept --step execution for sub-module isolation
-    # -------------------------------------------------------------------------
-    if "--step" in sys.argv:
-        step_idx = sys.argv.index("--step")
-        if step_idx + 1 < len(sys.argv):
-            step = sys.argv[step_idx + 1]
-            if step in step_map:
-                script, base_args = step_map[step]
-                passed_args = sys.argv[1:]
-                passed_args.remove("--step")
-                passed_args.remove(step)
+def _version_callback(value: bool) -> None:
+    if value:
+        print(f"KrakenParser {__version__}")
+        raise typer.Exit()
 
-                cmd = _build_cmd(script, base_args, passed_args)
-                sys.exit(subprocess.run(cmd).returncode)
 
-    # -------------------------------------------------------------------------
-    # 2. Main Argument Parser Definition
-    # -------------------------------------------------------------------------
-    parser = argparse.ArgumentParser(
-        description="KrakenParser: Convert Kraken2 Reports to CSV.",
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-
-    core_group = parser.add_argument_group("Core Arguments")
-    core_group.add_argument(
-        "-i", "--input", help="Directory containing Kraken2 report files"
-    )
-    core_group.add_argument(
-        "-o", "--output", help="Output directory (default: parent of input)"
-    )
-    core_group.add_argument(
-        "--viruses",
-        action="store_true",
-        help="Extract only VIRUSES domain taxa in the pipeline",
-    )
-    core_group.add_argument(
-        "--keep-human", action="store_true", help="Do not filter human-related taxa"
-    )
-    core_group.add_argument(
-        "-V", "--version", action="version", version=f"%(prog)s {__version__}"
-    )
-
-    pipe_group = parser.add_argument_group("Pipeline Options (Full Run)")
-    pipe_group.add_argument(
-        "-d",
-        "--depth",
-        type=int,
-        default=1000,
-        help="Rarefaction depth for β-diversity (default: 1000)",
-    )
-    pipe_group.add_argument(
-        "-s",
-        "--seed",
-        type=int,
-        help="Random seed for reproducible rarefaction (default: random)",
-    )
-    pipe_group.add_argument(
+@app.callback(invoke_without_command=True)
+def main_callback(
+    ctx: typer.Context,
+    input_dir: Optional[Path] = typer.Option(
+        None, "-i", "--input", help="Directory containing Kraken2 report files."
+    ),
+    output_dir: Optional[Path] = typer.Option(
+        None, "-o", "--output", help="Output directory."
+    ),
+    viruses: bool = typer.Option(
+        False, "--viruses", help="Extract only VIRUSES domain taxa in the pipeline."
+    ),
+    bacteria: bool = typer.Option(
+        False, "--bacteria", help="Extract only BACTERIA domain taxa in the pipeline."
+    ),
+    fungi: bool = typer.Option(
+        False, "--fungi", help="Extract only FUNGI kingdom taxa in the pipeline."
+    ),
+    archaea: bool = typer.Option(
+        False, "--archaea", help="Extract only ARCHAEA domain taxa in the pipeline."
+    ),
+    keep_human: bool = typer.Option(
+        False, "--keep-human", help="Do not filter human-related taxa."
+    ),
+    version: Optional[bool] = typer.Option(
+        None,
+        "-V",
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show version and exit.",
+    ),
+    depth: int = typer.Option(
+        1000, "-d", "--depth", help="Rarefaction depth for β-diversity."
+    ),
+    seed: Optional[int] = typer.Option(
+        None, "-s", "--seed", help="Random seed for reproducible rarefaction."
+    ),
+    overwrite: bool = typer.Option(
+        False,
         "--overwrite",
-        action="store_true",
-        help="Overwrite the output directory if it already exists",
-    )
+        help="Overwrite the output directory if it already exists.",
+    ),
+) -> None:
+    """
+    KrakenParser: Convert Kraken2 Reports to CSV and analyze microbial diversity.
 
-    adv_group = parser.add_argument_group("Advanced (Step-by-step control)")
-    adv_group.add_argument(
-        "--step",
-        choices=list(step_map.keys()),
-        help="Run only a specific part of the pipeline.\nType 'krakenparser --step <name> -h' for more.",
-    )
+    To execute the full pipeline automatically, just use the global options.
 
-    # Suppressed routing flags for strict backwards compatibility
-    legacy_flags = [
-        "--complete",
-        "--kreport2mpa",
-        "--combine_mpa",
-        "--deconstruct",
-        "--deconstruct_viruses",
-        "--process",
-        "--txt2csv",
-        "--relabund",
-        "--diversity",
-    ]
-    for flag in legacy_flags:
-        parser.add_argument(flag, action="store_true", help=argparse.SUPPRESS)
+    Alternatively, you can run specific parts of the pipeline manually in the following order:
 
-    # -------------------------------------------------------------------------
-    # 3. Routing Logic and Validation
-    # -------------------------------------------------------------------------
-    for _a in sys.argv:
-        if "\x00" in _a:
-            sys.exit("Error: argument contains invalid null byte.")
+    mpa ➔ combine ➔ split ➔ process ➔ csv ➔ relabund ➔ diversity
 
-    args, unknown_args = parser.parse_known_args()
+    Each step behaves as an independent tool. Type 'krakenparser <command> --help' to see options for a specific step.
+    """
 
-    legacy_map = {
-        "complete": (package_dir / "pipeline.py", []),
-        "kreport2mpa": step_map["mpa"],
-        "combine_mpa": step_map["combine"],
-        "deconstruct": step_map["split"],
-        "deconstruct_viruses": (
-            package_dir / "counts" / "split_mpa.py",
-            ["--viruses-only"],
-        ),
-        "process": step_map["process"],
-        "txt2csv": step_map["csv"],
-        "relabund": step_map["relabund"],
-        "diversity": step_map["diversity"],
-    }
+    if ctx.invoked_subcommand is not None:
+        return
 
-    passed_legacy_args = [
-        arg
-        for arg in sys.argv[1:]
-        if not arg.startswith("--") or arg.lstrip("--") not in legacy_map
-    ]
+    if input_dir:
+        print("KrakenParser by Ilia V. Popov")
 
-    for flag, (script, base_args) in legacy_map.items():
-        if getattr(args, flag, False):
-            cmd = _build_cmd(script, base_args, passed_legacy_args)
-            sys.exit(subprocess.run(cmd).returncode)
-
-    # Standard entry point: trigger pipeline execution if input directory is provided
-    if args.input:
-        script = package_dir / "pipeline.py"
-        cmd = _build_cmd(script, [], sys.argv[1:])
-
-        in_path = Path(args.input)
-        out_path = Path(args.output) if args.output else in_path.parent
+        out_path = output_dir if output_dir else input_dir.parent
         out_path.mkdir(parents=True, exist_ok=True)
         log_file_path = out_path / "krakenparser.log"
 
-        with open(log_file_path, "w") as log_file:
-            result = subprocess.run(cmd, stdout=log_file, stderr=subprocess.STDOUT)
+        log_handler = logging.FileHandler(log_file_path, mode="w")
+        log_handler.setFormatter(logging.Formatter("%(message)s"))
+        logging.basicConfig(level=logging.INFO, handlers=[log_handler])
 
-        if result.returncode == 0:
-            print("All steps completed successfully!")
-            print(f"Logs saved to {log_file_path}")
+        try:
+            run_pipeline(
+                input_dir=input_dir,
+                output_dir=output_dir,
+                keep_human=keep_human,
+                viruses_only=viruses,
+                bacteria_only=bacteria,
+                fungi_only=fungi,
+                archaea_only=archaea,
+                rarefaction_depth=depth,
+                seed=seed,
+                overwrite=overwrite,
+            )
+        except (FileNotFoundError, FileExistsError) as e:
+            print(f"Error: {e}", file=sys.stderr)
+            raise typer.Exit(code=1)
 
-            has_depth = any(arg in sys.argv for arg in ["-d", "--depth"])
-            has_seed = any(arg in sys.argv for arg in ["-s", "--seed"])
+        print("All steps completed successfully!")
+        print(f"Logs saved to {log_file_path}")
 
-            out_str = out_path.as_posix()
+        out_str = out_path.as_posix()
 
-            print("\n" + "=" * 95)
+        has_custom_depth = (
+            str(ctx.get_parameter_source("depth")) != "ParameterSource.DEFAULT"
+        )
+        has_custom_seed = (
+            str(ctx.get_parameter_source("seed")) != "ParameterSource.DEFAULT"
+        )
 
-            if not has_depth and not has_seed:
-                print(
-                    f"""
-[INFO] Pipeline completed using default rarefaction parameters (depth=1000, seed=random).
+        print("\n" + "=" * 95)
+
+        if not has_custom_depth and not has_custom_seed:
+            print(
+                f"""
+[INFO] Pipeline completed using default rarefaction parameters (depth={depth}, seed=random).
        To calibrate beta-diversity sensitivity metrics for this specific dataset,
        manually execute the diversity sub-module with custom thresholds.
        Example:
-       krakenparser --step diversity \\
+       krakenparser diversity \\
        -i {out_str}/counts/counts_species.csv \\
        -o {out_str}/diversity \\
        --depth 1500 \\
-       --seed 42
-       """.rstrip()
-                )
+       --seed 42""".rstrip()
+            )
 
-            print(
-                f"""
+        print(
+            f"""
 [TIP] Downstream Data Visualization Prerequisite:
       Relative abundance normalization is required to group low-abundance taxa
       using the -O / --other <float> parameter. Without filtering the 'long tail'
       of rare taxa, the resulting visualization will suffer from overplotting
       and significant loss of interpretability.
       Example:
-      krakenparser --step relabund \\
+      krakenparser relabund \\
       -i {out_str}/counts/counts_species.csv \\
       -o {out_str}/rel_abund/counts_species_relabund_3_5.csv \\
       -O 3.5
 
-{"=" * 95}
-            """.rstrip()
-            )
-        else:
-            print(f"Pipeline failed. Check logs at {log_file_path}")
+{"=" * 95}""".rstrip()
+        )
 
-        sys.exit(result.returncode)
+        raise typer.Exit()
 
-    # Fallback to usage overview if no actionable arguments were provided
-    parser.print_help()
+    print("KrakenParser by Ilia V. Popov")
+    print(ctx.get_help())
+
+
+def entry_point() -> None:
+    try:
+        app()
+    except KeyboardInterrupt:
+        print("\nExecution interrupted by user.", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    main()
+    entry_point()

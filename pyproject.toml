@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "krakenparser"
-version = "1.0.1"
+version = "1.1.0"
 description = "A collection of scripts designed to process Kraken2 reports and convert them into CSV format."
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
@@ -16,6 +16,7 @@ dependencies = [
     "numpy>=1.24.0,<=2.3.5",
     "seaborn>=0.12.0,<=0.13.2",
     "scipy>=1.9.0,<=1.16.3",
+    "typer>=0.12.0,<1",
 ]
 
 [project.optional-dependencies]
@@ -28,7 +29,8 @@ dev = [
 Homepage = "https://github.com/PopovIILab/KrakenParser"
 
 [project.scripts]
-KrakenParser = "krakenparser.krakenparser:main"
+KrakenParser = "krakenparser.krakenparser:entry_point"
+krakenparser = "krakenparser.krakenparser:entry_point"
 
 [tool.setuptools.packages.find]
 where = ["."]

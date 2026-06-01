@@ -1,22 +1,29 @@
 #!/usr/bin/env python
 """Convert a Kraken2 report to MetaPhlAn (MPA) format."""
 
-import argparse
 import logging
 import os
 import sys
 from pathlib import Path
+from typing import Optional
+
+import typer
 
 from krakenparser.utils import ensure_output_dir
 
 _log = logging.getLogger(__name__)
 
+app = typer.Typer(
+    name="mpa",
+    add_completion=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+
 _MAIN_LVLS = {"R", "K", "D", "P", "C", "O", "F", "G", "S"}
 
 
 def _parse_line(line: str, remove_spaces: bool = False) -> list:
-    """
-    Parse one Kraken2 report line.
+    """Parse one Kraken2 report line.
 
     Returns [name, level_num, level_type, all_reads, percents]
     or empty list on malformed input.
@@ -71,23 +78,17 @@ def _parse_line(line: str, remove_spaces: bool = False) -> list:
 
 
 def kreport_to_mpa(
-    report_path: str,
-    output_path: str,
+    report_path: Path,
+    output_path: Path,
     display_header: bool = False,
     include_intermediate: bool = False,
     use_reads: bool = True,
     remove_spaces: bool = True,
 ) -> None:
-    """
-    Convert a single Kraken2 report to MPA format.
-
-    Tracks the current taxonomic path via curr_path and prev_lvl_num,
-    popping the stack when moving back up the tree — exactly as the
-    original script does.
-    """
-    if not Path(report_path).is_file():
+    """Convert a single Kraken2 report to MPA format."""
+    if not report_path.is_file():
         raise FileNotFoundError(f"Input file not found: {report_path}")
-    out_path = ensure_output_dir(output_path, is_file=True)
+    out_path = ensure_output_dir(str(output_path), is_file=True)
 
     curr_path: list[str] = []
     prev_lvl_num = -1
@@ -103,11 +104,9 @@ def kreport_to_mpa(
 
             name, level_num, level_type, all_reads, percents = report_vals
 
-            # Пропускаем unclassified
             if level_type == "U":
                 continue
 
-            # Нормализуем тип уровня
             if level_type not in _MAIN_LVLS:
                 level_type = "x"
             elif level_type == "K":
@@ -140,104 +139,104 @@ def kreport_to_mpa(
             prev_lvl_num = level_num
 
 
-def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    parser = argparse.ArgumentParser(
-        description="Convert a Kraken2 report to MetaPhlAn (MPA) format."
-    )
-
-    mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument(
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    r_file: Optional[Path] = typer.Option(
+        None,
         "-r",
         "--report-file",
         "--report",
-        dest="r_file",
-        help="Single input Kraken2 report file",
-    )
-    mode.add_argument(
+        help="Single input Kraken2 report file.",
+    ),
+    input_dir: Optional[Path] = typer.Option(
+        None,
         "-i",
         "--input",
-        dest="input_dir",
-        help="Input directory containing Kraken2 report files (batch mode)",
-    )
-    parser.add_argument(
+        help="Input directory containing Kraken2 report files (batch mode).",
+    ),
+    o_file: Optional[Path] = typer.Option(
+        None,
         "-o",
         "--output",
-        required=True,
-        dest="o_file",
-        help="Output MPA file (single mode) or output directory (batch mode)",
-    )
-    parser.add_argument(
+        help="Output MPA file (single mode) or output directory (batch mode).",
+    ),
+    display_header: bool = typer.Option(
+        False,
         "--display-header",
-        action="store_true",
-        dest="add_header",
-        default=False,
-        help="Write a header line with the sample name (filename)",
-    )
-    parser.add_argument(
-        "--read_count",
-        action="store_true",
-        dest="use_reads",
-        default=True,
-        help="Output clade read counts [default]",
-    )
-    parser.add_argument(
+        help="Write a header line with the sample name (filename).",
+    ),
+    percentages: bool = typer.Option(
+        False,
         "--percentages",
-        action="store_false",
-        dest="use_reads",
-        help="Output percentages instead of read counts",
-    )
-    parser.add_argument(
+        help="Output percentages instead of read counts.",
+    ),
+    intermediate_ranks: bool = typer.Option(
+        False,
         "--intermediate-ranks",
-        action="store_true",
-        dest="x_include",
-        default=False,
-        help="Include non-standard taxonomic ranks in output",
-    )
-    parser.add_argument(
-        "--no-intermediate-ranks",
-        action="store_false",
-        dest="x_include",
-        help="Exclude non-standard taxonomic ranks [default]",
-    )
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--remove-spaces",
-        action="store_true",
-        dest="remove_spaces",
-        default=True,
-        help="Replace spaces with underscores in taxon names [default]",
-    )
-    group.add_argument(
+        help="Include non-standard taxonomic ranks in output.",
+    ),
+    keep_spaces: bool = typer.Option(
+        False,
         "--keep-spaces",
-        action="store_false",
-        dest="remove_spaces",
-        help="Keep spaces in taxon names",
-    )
-    args = parser.parse_args()
+        help="Keep spaces in taxon names instead of replacing them with underscores.",
+    ),
+) -> None:
+    """Convert a Kraken2 report to MetaPhlAn (MPA) format."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+    if r_file is None and input_dir is None and o_file is None:
+        print(ctx.get_help())
+        raise typer.Exit()
+
+    if o_file is None:
+        print("Error: Missing required option '-o / --output'.", file=sys.stderr)
+        raise typer.Exit(code=1)
+
+    if r_file is None and input_dir is None:
+        print(
+            "Error: Either -r/--report-file or -i/--input must be provided.",
+            file=sys.stderr,
+        )
+        raise typer.Exit(code=1)
+
+    if r_file is not None and input_dir is not None:
+        print(
+            "Error: Cannot use both -r/--report-file and -i/--input simultaneously.",
+            file=sys.stderr,
+        )
+        raise typer.Exit(code=1)
+
+    use_reads = not percentages
+    remove_spaces = not keep_spaces
 
     kwargs = dict(
-        display_header=args.add_header,
-        include_intermediate=args.x_include,
-        use_reads=args.use_reads,
-        remove_spaces=args.remove_spaces,
+        display_header=display_header,
+        include_intermediate=intermediate_ranks,
+        use_reads=use_reads,
+        remove_spaces=remove_spaces,
     )
 
-    if args.input_dir:
-        input_dir = Path(args.input_dir)
-        if not input_dir.is_dir():
-            sys.exit(f"Error: input directory not found: {input_dir}")
-        output_dir = Path(args.o_file)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        for f in sorted(input_dir.iterdir()):
-            if not f.is_file():
-                continue
-            out_name = f.name.replace(".kreport", ".MPA.TXT")
-            kreport_to_mpa(str(f), str(output_dir / out_name), **kwargs)
-        _log.info("Converted to MPA successfully. Output stored in %s", output_dir)
-    else:
-        kreport_to_mpa(args.r_file, args.o_file, **kwargs)
+    try:
+        if input_dir:
+            if not input_dir.is_dir():
+                print(f"Error: input directory not found: {input_dir}", file=sys.stderr)
+                raise typer.Exit(code=1)
+
+            o_file.mkdir(parents=True, exist_ok=True)
+            for f in sorted(input_dir.iterdir()):
+                if not f.is_file():
+                    continue
+                out_name = f.name.replace(".kreport", ".MPA.TXT")
+                kreport_to_mpa(f, o_file / out_name, **kwargs)
+            _log.info("Converted to MPA successfully. Output stored in %s", o_file)
+        else:
+            kreport_to_mpa(r_file, o_file, **kwargs)
+
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
-    main()
+    app()

@@ -1,15 +1,24 @@
 #!/usr/bin/env python
 
-import argparse
 import logging
 import os
+import sys
 import tempfile
 from pathlib import Path
+from typing import Optional
+
+import typer
 
 _log = logging.getLogger(__name__)
 
+app = typer.Typer(
+    name="process",
+    add_completion=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
-def modify_taxa_names(line):
+
+def modify_taxa_names(line: str) -> str:
     prefixes = ["s__", "g__", "f__", "o__", "c__", "p__"]
     for prefix in prefixes:
         if line.startswith(prefix):
@@ -19,7 +28,7 @@ def modify_taxa_names(line):
     return line
 
 
-def process_files(source_file, destination_file):
+def process_files(source_file: str, destination_file: str) -> None:
     src_path = Path(source_file)
     if not src_path.is_file():
         raise FileNotFoundError(f"Source file not found: {src_path}")
@@ -53,26 +62,42 @@ def process_files(source_file, destination_file):
     _log.info(f"Processed {destination_file} successfully.")
 
 
-def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    parser = argparse.ArgumentParser(
-        description="Reads a source file, processes its first line, modifies taxa names in a destination file, and updates it."
-    )
-    parser.add_argument(
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    input_file: Optional[str] = typer.Option(
+        None,
         "-i",
         "--input",
-        required=True,
         help="Path to the source file. This file's first line will be read and modified.",
-    )
-    parser.add_argument(
+    ),
+    output_file: Optional[str] = typer.Option(
+        None,
         "-o",
         "--output",
-        required=True,
         help="Path to the destination file. This file's contents will be updated with cleaned taxa names.",
-    )
-    args = parser.parse_args()
-    process_files(args.input, args.output)
+    ),
+) -> None:
+    """Reads a source file, processes its first line, modifies taxa names in a destination file, and updates it."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+    if input_file is None and output_file is None:
+        print(ctx.get_help())
+        raise typer.Exit()
+
+    if not input_file or not output_file:
+        print(
+            "Error: Missing required options '-i / --input' and '-o / --output'.",
+            file=sys.stderr,
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        process_files(input_file, output_file)
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
-    main()
+    app()

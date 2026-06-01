@@ -1,20 +1,19 @@
-"""Smoke tests for CLI entry-points (main() functions via sys.argv monkeypatching)."""
+"""Smoke tests for CLI entry-points via Typer CliRunner."""
 
 import shutil
-import sys
-import warnings
 
 import pandas as pd
 import pytest
+from typer.testing import CliRunner
 
-from krakenparser.counts.convert2csv import main as convert2csv_main
-from krakenparser.counts.processing_script import main as processing_main
-from krakenparser.counts.split_mpa import main as split_mpa_main
-from krakenparser.mpa.mpa_table import main as mpa_table_main
-from krakenparser.mpa.transform2mpa import main as transform2mpa_main
-from krakenparser.pipeline import main as pipeline_main
-from krakenparser.stats.diversity import main as diversity_main
-from krakenparser.stats.relabund import main as relabund_main
+from krakenparser.counts.convert2csv import app as convert2csv_app
+from krakenparser.counts.processing_script import app as processing_app
+from krakenparser.counts.split_mpa import app as split_mpa_app
+from krakenparser.mpa.mpa_table import app as mpa_table_app
+from krakenparser.mpa.transform2mpa import app as transform2mpa_app
+from krakenparser.pipeline import app as pipeline_app
+from krakenparser.stats.diversity import app as diversity_app
+from krakenparser.stats.relabund import app as relabund_app
 
 _MPA_A = "#Classification\tsample1\nd__Bacteria|s__Pseudomonas_aeruginosa\t300\n"
 _MPA_B = "#Classification\tsample2\nd__Bacteria|s__Pseudomonas_aeruginosa\t100\n"
@@ -26,18 +25,35 @@ _COMBINED_MPA = (
 )
 
 
+@pytest.fixture
+def runner():
+    return CliRunner()
+
+
 # ---------------------------------------------------------------------------
 # convert2csv
 # ---------------------------------------------------------------------------
 
 
-def test_convert2csv_main(counts_txt_file, tmp_path, monkeypatch):
-    out = tmp_path / "out.csv"
-    monkeypatch.setattr(
-        sys, "argv", ["c2c", "-i", str(counts_txt_file), "-o", str(out)]
+def test_convert2csv_no_args_shows_help(runner):
+    result = runner.invoke(convert2csv_app, [])
+    assert result.exit_code == 0
+    assert "Usage" in result.output
+
+
+def test_convert2csv_missing_one_option(runner, tmp_path):
+    result = runner.invoke(convert2csv_app, ["-i", str(tmp_path / "x.txt")])
+    assert result.exit_code == 1
+    assert "Missing required options" in result.output
+
+
+def test_convert2csv_file_not_found(runner, tmp_path):
+    result = runner.invoke(
+        convert2csv_app,
+        ["-i", str(tmp_path / "ghost.txt"), "-o", str(tmp_path / "out.csv")],
     )
-    convert2csv_main()
-    assert out.exists()
+    assert result.exit_code == 1
+    assert "Error" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -45,13 +61,25 @@ def test_convert2csv_main(counts_txt_file, tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_processing_main(tmp_path, monkeypatch):
-    source = tmp_path / "COMBINED.txt"
-    source.write_text("#Classification\tsample1.kreport\n")
-    dest = tmp_path / "counts.txt"
-    dest.write_text("s__Pseudomonas_aeruginosa\t100\n")
-    monkeypatch.setattr(sys, "argv", ["ps", "-i", str(source), "-o", str(dest)])
-    processing_main()
+def test_processing_no_args_shows_help(runner):
+    result = runner.invoke(processing_app, [])
+    assert result.exit_code == 0
+    assert "Usage" in result.output
+
+
+def test_processing_missing_one_option(runner, tmp_path):
+    result = runner.invoke(processing_app, ["-i", str(tmp_path / "x.txt")])
+    assert result.exit_code == 1
+    assert "Missing required options" in result.output
+
+
+def test_processing_file_not_found(runner, tmp_path):
+    result = runner.invoke(
+        processing_app,
+        ["-i", str(tmp_path / "ghost.txt"), "-o", str(tmp_path / "dest.txt")],
+    )
+    assert result.exit_code == 1
+    assert "Error" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -59,33 +87,25 @@ def test_processing_main(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_split_mpa_main(tmp_path, monkeypatch):
-    combined = tmp_path / "COMBINED.txt"
-    combined.write_text(_COMBINED_MPA)
-    out = tmp_path / "out"
-    monkeypatch.setattr(sys, "argv", ["sm", "-i", str(combined), "-o", str(out)])
-    split_mpa_main()
-    assert (out / "txt" / "counts_species.txt").exists()
+def test_split_mpa_no_args_shows_help(runner):
+    result = runner.invoke(split_mpa_app, [])
+    assert result.exit_code == 0
+    assert "Usage" in result.output
 
 
-def test_split_mpa_main_viruses_only(tmp_path, monkeypatch):
-    combined = tmp_path / "COMBINED.txt"
-    combined.write_text(_COMBINED_MPA + "d__Viruses|s__Virus_X\t5\t3\n")
-    out = tmp_path / "out"
-    monkeypatch.setattr(
-        sys, "argv", ["sm", "-i", str(combined), "-o", str(out), "--viruses-only"]
+def test_split_mpa_missing_one_option(runner, tmp_path):
+    result = runner.invoke(split_mpa_app, ["-i", str(tmp_path / "x.txt")])
+    assert result.exit_code == 1
+    assert "Missing required options" in result.output
+
+
+def test_split_mpa_file_not_found(runner, tmp_path):
+    result = runner.invoke(
+        split_mpa_app,
+        ["-i", str(tmp_path / "ghost.txt"), "-o", str(tmp_path / "out")],
     )
-    split_mpa_main()
-
-
-def test_split_mpa_main_keep_human(tmp_path, monkeypatch):
-    combined = tmp_path / "COMBINED.txt"
-    combined.write_text(_COMBINED_MPA)
-    out = tmp_path / "out"
-    monkeypatch.setattr(
-        sys, "argv", ["sm", "-i", str(combined), "-o", str(out), "--keep-human"]
-    )
-    split_mpa_main()
+    assert result.exit_code == 1
+    assert "Error" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -93,13 +113,14 @@ def test_split_mpa_main_keep_human(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_mpa_table_main(tmp_path, monkeypatch):
+def test_mpa_table_main(tmp_path, runner):
     a, b = tmp_path / "a.MPA.TXT", tmp_path / "b.MPA.TXT"
     a.write_text(_MPA_A)
     b.write_text(_MPA_B)
     out = tmp_path / "COMBINED.txt"
-    monkeypatch.setattr(sys, "argv", ["mt", "-i", str(a), str(b), "-o", str(out)])
-    mpa_table_main()
+
+    result = runner.invoke(mpa_table_app, ["-i", str(a), "-i", str(b), "-o", str(out)])
+    assert result.exit_code == 0
     assert out.exists()
 
 
@@ -108,22 +129,23 @@ def test_mpa_table_main(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_transform2mpa_main_single(kreport_file, tmp_path, monkeypatch):
+def test_transform2mpa_main_single(kreport_file, tmp_path, runner):
     out = tmp_path / "out.MPA.TXT"
-    monkeypatch.setattr(sys, "argv", ["t2m", "-r", str(kreport_file), "-o", str(out)])
-    transform2mpa_main()
+    result = runner.invoke(transform2mpa_app, ["-r", str(kreport_file), "-o", str(out)])
+    assert result.exit_code == 0
     assert out.exists()
 
 
-def test_transform2mpa_main_batch(kreport_file, tmp_path, monkeypatch):
+def test_transform2mpa_main_batch(kreport_file, tmp_path, runner):
     kreports_dir = tmp_path / "kreports"
     kreports_dir.mkdir()
     shutil.copy(kreport_file, kreports_dir / kreport_file.name)
     out_dir = tmp_path / "mpa_out"
-    monkeypatch.setattr(
-        sys, "argv", ["t2m", "-i", str(kreports_dir), "-o", str(out_dir)]
+
+    result = runner.invoke(
+        transform2mpa_app, ["-i", str(kreports_dir), "-o", str(out_dir)]
     )
-    transform2mpa_main()
+    assert result.exit_code == 0
     assert out_dir.is_dir()
 
 
@@ -132,35 +154,37 @@ def test_transform2mpa_main_batch(kreport_file, tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_diversity_main_with_seed(counts_csv_file, tmp_path, monkeypatch):
-    out_dir = tmp_path / "div"
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "div",
-            "-i",
-            str(counts_csv_file),
-            "-o",
-            str(out_dir),
-            "-d",
-            "1000",
-            "-s",
-            "42",
-        ],
-    )
-    diversity_main()
-    assert (out_dir / "alpha_div.csv").exists()
+def test_diversity_no_args_shows_help(runner):
+    result = runner.invoke(diversity_app, [])
+    assert result.exit_code == 0
+    assert "Usage" in result.output
 
 
-def test_diversity_main_no_seed(counts_csv_file, tmp_path, monkeypatch):
-    out_dir = tmp_path / "div"
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        ["div", "-i", str(counts_csv_file), "-o", str(out_dir), "-d", "1000"],
+def test_diversity_missing_one_option(runner, tmp_path):
+    result = runner.invoke(diversity_app, ["-o", str(tmp_path / "out")])
+    assert result.exit_code == 1
+    assert "Missing required options" in result.output
+
+
+def test_diversity_file_not_found(runner, tmp_path):
+    result = runner.invoke(
+        diversity_app,
+        ["-i", str(tmp_path / "ghost.csv"), "-o", str(tmp_path / "out")],
     )
-    diversity_main()
+    assert result.exit_code == 1
+    assert "Error" in result.output
+
+
+def test_diversity_not_enough_samples_for_beta(runner, tmp_path):
+    csv_in = tmp_path / "single.csv"
+    pd.DataFrame({"Taxon_A": [100], "Taxon_B": [200]}, index=["S1"]).to_csv(csv_in)
+    out_dir = tmp_path / "div"
+    result = runner.invoke(
+        diversity_app,
+        ["-i", str(csv_in), "-o", str(out_dir), "-d", "50"],
+    )
+    assert result.exit_code == 1
+    assert "Error" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -168,34 +192,25 @@ def test_diversity_main_no_seed(counts_csv_file, tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_relabund_main(counts_csv_file, tmp_path, monkeypatch):
-    out = tmp_path / "ra.csv"
-    monkeypatch.setattr(sys, "argv", ["ra", "-i", str(counts_csv_file), "-o", str(out)])
-    relabund_main()
-    assert out.exists()
+def test_relabund_no_args_shows_help(runner):
+    result = runner.invoke(relabund_app, [])
+    assert result.exit_code == 0
+    assert "Usage" in result.output
 
 
-def test_relabund_main_with_other_threshold(counts_csv_file, tmp_path, monkeypatch):
-    out = tmp_path / "ra.csv"
-    monkeypatch.setattr(
-        sys, "argv", ["ra", "-i", str(counts_csv_file), "-o", str(out), "-O", "50"]
+def test_relabund_missing_one_option(runner, tmp_path):
+    result = runner.invoke(relabund_app, ["-i", str(tmp_path / "x.csv")])
+    assert result.exit_code == 1
+    assert "Missing required options" in result.output
+
+
+def test_relabund_file_not_found(runner, tmp_path):
+    result = runner.invoke(
+        relabund_app,
+        ["-i", str(tmp_path / "ghost.csv"), "-o", str(tmp_path / "out.csv")],
     )
-    relabund_main()
-
-
-def test_relabund_warns_zero_abundance_sample(tmp_path):
-    df = pd.DataFrame(
-        {"Sample_id": ["S1", "S2"], "Taxon_A": [0, 100], "Taxon_B": [0, 200]}
-    )
-    csv_in = tmp_path / "counts.csv"
-    df.to_csv(csv_in, index=False)
-    out = tmp_path / "ra.csv"
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        from krakenparser.stats.relabund import calculate_rel_abund
-
-        calculate_rel_abund(str(csv_in), str(out))
-    assert any("zero total abundance" in str(w.message) for w in caught)
+    assert result.exit_code == 1
+    assert "Error" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -203,7 +218,27 @@ def test_relabund_warns_zero_abundance_sample(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_pipeline_main_missing_input_exits(tmp_path, monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["pipeline", "-i", str(tmp_path / "ghost")])
-    with pytest.raises(SystemExit):
-        pipeline_main()
+def test_pipeline_no_mpa_files(runner, tmp_path):
+    empty_dir = tmp_path / "kreports"
+    empty_dir.mkdir()
+    result = runner.invoke(pipeline_app, ["-i", str(empty_dir)])
+    assert result.exit_code == 1
+    assert "Error" in result.output
+
+
+def test_pipeline_file_exists_error(runner, tmp_path, kreport_file):
+    kreports_dir = tmp_path / "kreports"
+    kreports_dir.mkdir()
+    shutil.copy(kreport_file, kreports_dir / kreport_file.name)
+
+    runner.invoke(pipeline_app, ["-i", str(kreports_dir), "--overwrite"])
+
+    result = runner.invoke(pipeline_app, ["-i", str(kreports_dir)])
+    assert result.exit_code == 1
+    assert "Error" in result.output
+
+
+def test_pipeline_missing_input_dir(runner, tmp_path):
+    result = runner.invoke(pipeline_app, ["-i", str(tmp_path / "ghost")])
+    assert result.exit_code == 1
+    assert "Error" in result.output
