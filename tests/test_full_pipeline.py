@@ -31,7 +31,7 @@ def test_full_pipeline_end_to_end(demo_run):
     run_dir = demo_run["run_dir"]
     kreports_path = run_dir / "kreports"
 
-    run_pipeline(str(kreports_path))
+    run_pipeline(kreports_path)
 
     # Assert each rank-level CSV exists and is non-empty
     ranks = ["phylum", "class", "order", "family", "genus", "species"]
@@ -59,17 +59,17 @@ def test_pipeline_overwrite_protection(demo_run):
     run_dir = demo_run["run_dir"]
     kreports_path = run_dir / "kreports"
 
-    run_pipeline(str(kreports_path))
+    run_pipeline(kreports_path)
 
     # Second run without --overwrite must raise (library function, not sys.exit)
     with pytest.raises(FileExistsError):
-        run_pipeline(str(kreports_path))
+        run_pipeline(kreports_path)
 
 
 def test_pipeline_overwrite_flag(demo_run):
     run_dir = demo_run["run_dir"]
     kreports_path = run_dir / "kreports"
 
-    run_pipeline(str(kreports_path))
+    run_pipeline(kreports_path)
     # Second run with overwrite=True must succeed
-    run_pipeline(str(kreports_path), overwrite=True)
+    run_pipeline(kreports_path, overwrite=True)
