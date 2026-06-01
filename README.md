@@ -9,7 +9,9 @@
 <img src="https://github.com/PopovIILab/KrakenParser/blob/main/imgs/KrakenParser_logo_dark.png#gh-dark-mode-only" align="left"/>
 
 ## Overview
+
 KrakenParser is a collection of scripts designed to process Kraken2 reports and convert them into CSV format. This pipeline extracts taxonomic abundance data at six levels:
+
 - **Phylum**
 - **Class**
 - **Order**
@@ -17,9 +19,190 @@ KrakenParser is a collection of scripts designed to process Kraken2 reports and 
 - **Genus**
 - **Species**
 
-You can run the entire pipeline with **a single command**, or use the scripts **individually** depending on your needs.
+## Installation
+
+```bash
+# Linux / WSL / macOS
+conda create -n krakenparser pip -y
+conda activate krakenparser
+pip install krakenparser
+```
+
+## Usage Guide
+
+### Full Pipeline
+
+```bash
+KrakenParser -i data/kreports -o results/
+```
+
+This will:
+
+1. Convert Kraken2 reports to MPA format
+2. Combine MPA files into a single file
+3. Extract taxonomic levels into separate text files
+4. Process extracted text files
+5. Convert them into CSV format
+6. Calculate relative abundance
+7. Calculate α & β-diversities
+
+> [!TIP]
+> After the pipeline finishes, the output window will remind you about calibrating
+> rarefaction depth for β-diversity and re-running relative abundance normalization
+> before visualization — with ready-to-paste example commands tailored to your output paths.
+
+#### Full help output
+
+```text
+Usage: KrakenParser [OPTIONS] COMMAND [ARGS]...                                
+                                                                                
+ KrakenParser: Convert Kraken2 Reports to CSV and analyze microbial diversity.  
+                                                                                
+ To execute the full pipeline automatically, just use the global options.       
+                                                                                
+ Alternatively, you can run specific parts of the pipeline manually in the      
+ following order:                                                               
+                                                                                
+ mpa ➔ combine ➔ split ➔ process ➔ csv ➔ relabund ➔ diversity                   
+                                                                                
+ Each step behaves as an independent tool. Type 'krakenparser <command> --help' 
+ to see options for a specific step.                                            
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --input       -i      PATH     Directory containing Kraken2 report files.    │
+│ --output      -o      PATH     Output directory.                             │
+│ --viruses                      Extract only VIRUSES domain taxa in the       │
+│                                pipeline.                                     │
+│ --bacteria                     Extract only BACTERIA domain taxa in the      │
+│                                pipeline.                                     │
+│ --fungi                        Extract only FUNGI kingdom taxa in the        │
+│                                pipeline.                                     │
+│ --archaea                      Extract only ARCHAEA domain taxa in the       │
+│                                pipeline.                                     │
+│ --keep-human                   Do not filter human-related taxa.             │
+│ --version     -V               Show version and exit.                        │
+│ --depth       -d      INTEGER  Rarefaction depth for β-diversity.            │
+│                                [default: 1000]                               │
+│ --seed        -s      INTEGER  Random seed for reproducible rarefaction.     │
+│ --overwrite                    Overwrite the output directory if it already  │
+│                                exists.                                       │
+│ --help        -h               Show this message and exit.                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Advanced (Step-by-step pipeline control) ───────────────────────────────────╮
+│ mpa        Convert a Kraken2 report to MetaPhlAn (MPA) format.               │
+│ combine    Combine MPA files into a single tab-delimited table.              │
+│ split      Split a combined MPA table into per-rank TXT files.               │
+│ process    Reads a source file, processes its first line, modifies taxa      │
+│            names in a destination file, and updates it.                      │
+│ csv        Reads a TXT file, reorganizes the data, and converts it into a    │
+│            CSV file.                                                         │
+│ relabund   Calculates taxa relative abundance and saves it to a CSV file.    │
+│ diversity  Calculate α & β-diversities for microbial communities.            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
 
 🔗 Please visit [KrakenParser wiki](https://github.com/PopovIILab/KrakenParser/wiki) page
+
+### Advanced step-by-step mode
+
+<details>
+<summary><b>Advanced usage</b></summary>
+<br>
+
+Each step behaves as an independent tool. Type `krakenparser <command> --help` to see options for a specific step.
+
+### **Step 1: Convert Kraken2 Reports to MPA Format**
+
+```bash
+# Batch mode (directory)
+KrakenParser mpa -i data/kreports -o data/intermediate/mpa
+# Single file
+KrakenParser mpa -r data/kreports/sample.kreport -o data/intermediate/mpa/sample.MPA.TXT
+```
+
+Converts Kraken2 `.kreport` files into **MPA format**.
+
+### **Step 2: Combine MPA Files**
+
+```bash
+KrakenParser combine -i data/intermediate/mpa/* -o data/intermediate/COMBINED.txt
+```
+
+Merges multiple MPA files into a single combined table.
+
+### **Step 3: Extract Taxonomic Levels**
+
+```bash
+KrakenParser split -i data/intermediate/COMBINED.txt -o data/intermediate
+```
+
+By default, human-related taxa (Homo sapiens, Hominidae, Primates, Mammalia, Chordata) are removed. To keep them:
+
+```bash
+KrakenParser split -i data/intermediate/COMBINED.txt -o data/intermediate --keep-human
+```
+
+To inspect the **Viruses** domain only:
+
+```bash
+KrakenParser split -i data/intermediate/COMBINED.txt -o data/counts_viruses --viruses-only
+```
+
+Same for Bacteria and Archaea domains and Fungi kingdom (`--bacteria-only`; `--archaea-only` & `--fungi-only`)
+
+### **Step 4: Process Extracted Taxonomic Data**
+
+```bash
+KrakenParser process -i data/intermediate/COMBINED.txt -o data/intermediate/txt/counts_phylum.txt
+```
+
+Repeat on other 5 taxonomical levels (class, order, family, genus, species) or wrap `process` in a loop.
+
+Cleans up taxonomic names: removes prefixes (`s__`, `g__`, etc.) and replaces underscores with spaces.
+
+### **Step 5: Convert TXT to CSV**
+
+```bash
+KrakenParser csv -i data/intermediate/txt/counts_phylum.txt -o data/counts/counts_phylum.csv
+```
+
+Repeat on other 5 taxonomical levels or wrap in a loop. Transposes data so that sample names become rows.
+
+### **Step 6: Calculate Relative Abundance**
+
+```bash
+KrakenParser relabund -i data/counts/counts_phylum.csv -o data/rel_abund/ra_phylum.csv
+```
+
+Repeat on other 5 taxonomical levels or wrap in a loop.
+
+With "Other" grouping:
+
+```bash
+KrakenParser relabund -i data/counts/counts_phylum.csv -o data/rel_abund/ra_phylum.csv -O 3.5
+```
+
+Groups all taxa with abundance < 3.5 % into `Other (<3.5%)`.
+
+### **Step 7: Calculate α & β-Diversities**
+
+```bash
+KrakenParser diversity -i data/counts/counts_species.csv -o data/diversity
+```
+
+With a custom rarefaction depth:
+
+```bash
+KrakenParser diversity -i data/counts/counts_species.csv -o data/diversity -d 750
+```
+
+For reproducible results (fix the seed to get the same matrix every run):
+
+```bash
+KrakenParser diversity -i data/counts/counts_species.csv -o data/diversity -s 42
+```
+
+</details>
 
 ## Output example
 
@@ -27,7 +210,7 @@ You can run the entire pipeline with **a single command**, or use the scripts **
 
 `counts_phylum.csv` parsed from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
-```
+```text
 Sample_id,Calditrichota,Caldisericota,Thermosulfidibacterota,Elusimicrobiota,Candidatus Fervidibacterota,Lentisphaerota,Kiritimatiellota,Vulcanimicrobiota,Thermodesulfobiota,Atribacterota,Dictyoglomota,Nitrospinota,Chrysiogenota,Coprothermobacterota,Aquificota,Thermotogota,Bdellovibrionota,Nitrospirota,Deferribacterota,Synergistota,Myxococcota,Acidobacteriota,Candidatus Bipolaricaulota,Candidatus Saccharibacteria,Candidatus Absconditabacteria,Fusobacteriota,Spirochaetota,Candidatus Omnitrophota,Chlamydiota,Verrucomicrobiota,Planctomycetota,Thermodesulfobacteriota,Campylobacterota,Candidatus Cloacimonadota,Fibrobacterota,Gemmatimonadota,Balneolota,Rhodothermota,Ignavibacteriota,Chlorobiota,Bacteroidota,Deinococcota,Thermomicrobiota,Armatimonadota,Chloroflexota,Cyanobacteriota,Mycoplasmatota,Actinomycetota,Bacillota,Pseudomonadota,Heterolobosea,Parabasalia,Fornicata,Evosea,Bacillariophyta,Cercozoa,Euglenozoa,Apicomplexa,Microsporidia,Basidiomycota,Ascomycota,Nanoarchaeota,Candidatus Micrarchaeota,Candidatus Thermoplasmatota,Candidatus Lokiarchaeota,Nitrososphaerota,Euryarchaeota,Thermoproteota,Hofneiviricota,Artverviricota,Nucleocytoviricota,Cossaviricota,Kitrinoviricota,Negarnaviricota,Lenarviricota,Pisuviricota,Peploviricota,Uroviricota
 X1,0,0,0,0,0,0,0,0,1,1,1,1,2,3,4,5,7,8,9,17,23,25,5,13,22,47,54,1,6,27,31,128,151,2,6,13,1,3,7,44,14991,7,9,11,61,414,449,3551,55304,438645,0,0,0,0,0,0,1,22,0,4,15,0,0,0,0,0,3,191,0,0,1,88,0,0,0,161,0,1241
 X2,1,4,14,20,5,12,15,6,8,15,2,15,109,68,182,97,79,196,70,272,331,149,36,77,35,562,1237,21,33,129,427,1044,543,8,98,25,16,45,11,1043,41374,160,28,161,1348,1196,2709,15864,431170,2747842,22,7,301,373,134,136,107,3239,54,1151,2905,0,0,3,5,6,7,410,0,0,0,736,0,3,11,26,1,1552
@@ -41,7 +224,7 @@ X9,0,3,2,16,7,1,23,12,10,9,1,2,134,40,390,289,29,372,27,81,150,90,9,88,32,287,88
 
 `ra_phylum.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
-```
+```text
 Sample_id,taxon,rel_abund_perc
 X1,Pseudomonadota,85.03558294577552
 X1,Bacillota,10.72121619814011
@@ -63,7 +246,7 @@ X9,Other (<4.0%),1.8979510606688494
 
 `alpha_div.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
-```
+```text
 Sample,Shannon,Pielou,Chao1
 X1,3.911345447107001,0.5269245043289149,2274.533185840708
 X2,3.9944130792536563,0.4906424221265042,4155.0
@@ -76,7 +259,7 @@ X9,4.033664950188261,0.5050385978575492,3492.16
 
 `beta_div_bray.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
-```
+```text
 ,X1,X2,...,X8,X9
 X1,0.0,0.398,...,0.61,0.353
 X2,0.398,0.0,...,0.723,0.388
@@ -87,7 +270,7 @@ X9,0.353,0.388,...,0.665,0.0
 
 `beta_div_jaccard.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
-```
+```text
 ,X1,X2,...,X8,X9
 X1,0.0,0.7073170731707317,...,0.8223938223938224,0.7232472324723247
 X2,0.7073170731707317,0.0,...,0.835016835016835,0.7352941176470589
@@ -106,190 +289,11 @@ X9,0.7232472324723247,0.7352941176470589,...,0.8066914498141264,0.0
 |-------|-------|
 |![combined_white](https://github.com/user-attachments/assets/48b3f6e3-6dd5-4298-a793-23dcd549e90c)|![kpclust](https://github.com/user-attachments/assets/98a4d540-7c43-4802-8f77-277a5637a7a1)|
 
-## Quick Start (Full Pipeline)
-
-```bash
-KrakenParser -i data/kreports -o results/
-```
-
-This will:
-1. Convert Kraken2 reports to MPA format
-2. Combine MPA files into a single file
-3. Extract taxonomic levels into separate text files
-4. Process extracted text files
-5. Convert them into CSV format
-6. Calculate relative abundance
-7. Calculate α & β-diversities
-
-> [!TIP]
-> After the pipeline finishes, the output window will remind you about calibrating
-> rarefaction depth for β-diversity and re-running relative abundance normalization
-> before visualization — with ready-to-paste example commands tailored to your output paths.
-
-### Full help output
-
-```
-usage: KrakenParser [-h] [-i INPUT] [-o OUTPUT] [--viruses] [--keep-human]
-                    [-V] [-d DEPTH] [-s SEED] [--overwrite]
-                    [--step {mpa,combine,split,process,csv,relabund,diversity}]
-
-KrakenParser: Convert Kraken2 Reports to CSV.
-
-options:
-  -h, --help            show this help message and exit
-
-Core Arguments:
-  -i, --input INPUT     Directory containing Kraken2 report files
-  -o, --output OUTPUT   Output directory (default: parent of input)
-  --viruses             Extract only VIRUSES domain taxa in the pipeline
-  --keep-human          Do not filter human-related taxa
-  -V, --version         show program's version number and exit
-
-Pipeline Options (Full Run):
-  -d, --depth DEPTH     Rarefaction depth for β-diversity (default: 1000)
-  -s, --seed SEED       Random seed for reproducible rarefaction (default: random)
-  --overwrite           Overwrite the output directory if it already exists
-
-Advanced (Step-by-step control):
-  --step {mpa,combine,split,process,csv,relabund,diversity}
-                        Run only a specific part of the pipeline.
-                        Type 'krakenparser --step <name> -h' for more.
-```
-
-## Installation
-
-```
-pip install krakenparser
-```
-
----
-
-<details>
-<summary><b>Using Individual Modules (Advanced)</b></summary>
-<br>
-
-Each step of the pipeline can be run individually via `--step`. This is useful for re-running a single step, debugging, or integrating KrakenParser into a custom workflow. Run `krakenparser --step <name> -h` to see the full argument list for any step.
-
-### **Step 1: Convert Kraken2 Reports to MPA Format**
-```bash
-# Batch mode (directory)
-KrakenParser --step mpa -i data/kreports -o data/intermediate/mpa
-# Single file
-KrakenParser --step mpa -r data/kreports/sample.kreport -o data/intermediate/mpa/sample.MPA.TXT
-```
-Converts Kraken2 `.kreport` files into **MPA format**.
-
-### **Step 2: Combine MPA Files**
-```bash
-KrakenParser --step combine -i data/intermediate/mpa/* -o data/intermediate/COMBINED.txt
-```
-Merges multiple MPA files into a single combined table.
-
-### **Step 3: Extract Taxonomic Levels**
-```bash
-KrakenParser --step split -i data/intermediate/COMBINED.txt -o data/intermediate
-```
-
-By default, human-related taxa (Homo sapiens, Hominidae, Primates, Mammalia, Chordata) are removed. To keep them:
-```bash
-KrakenParser --step split -i data/intermediate/COMBINED.txt -o data/intermediate --keep-human
-```
-
-To inspect the **Viruses** domain only:
-```bash
-KrakenParser --step split -i data/intermediate/COMBINED.txt -o data/counts_viruses --viruses-only
-```
-
-### **Step 4: Process Extracted Taxonomic Data**
-```bash
-KrakenParser --step process -i data/intermediate/COMBINED.txt -o data/intermediate/txt/counts_phylum.txt
-```
-
-Repeat on other 5 taxonomical levels (class, order, family, genus, species) or wrap `--step process` in a loop.
-
-Cleans up taxonomic names: removes prefixes (`s__`, `g__`, etc.) and replaces underscores with spaces.
-
-### **Step 5: Convert TXT to CSV**
-```bash
-KrakenParser --step csv -i data/intermediate/txt/counts_phylum.txt -o data/counts/counts_phylum.csv
-```
-Repeat on other 5 taxonomical levels or wrap in a loop. Transposes data so that sample names become rows.
-
-### **Step 6: Calculate Relative Abundance**
-```bash
-KrakenParser --step relabund -i data/counts/counts_phylum.csv -o data/rel_abund/ra_phylum.csv
-```
-Repeat on other 5 taxonomical levels or wrap in a loop.
-
-With "Other" grouping:
-```bash
-KrakenParser --step relabund -i data/counts/counts_phylum.csv -o data/rel_abund/ra_phylum.csv -O 3.5
-```
-Groups all taxa with abundance < 3.5 % into `Other (<3.5%)`.
-
-### **Step 7: Calculate α & β-Diversities**
-```bash
-KrakenParser --step diversity -i data/counts/counts_species.csv -o data/diversity
-```
-
-With a custom rarefaction depth:
-```bash
-KrakenParser --step diversity -i data/counts/counts_species.csv -o data/diversity -d 750
-```
-
-For reproducible results (fix the seed to get the same matrix every run):
-```bash
-KrakenParser --step diversity -i data/counts/counts_species.csv -o data/diversity -s 42
-```
-
----
-
-## Arguments Breakdown
-
-### **Full Pipeline** (`-i`)
-- `-i / --input`: path to the Kraken2 reports directory (e.g., `data/kreports`). Triggers the full pipeline.
-- `-o / --output`: output directory (default: parent of `-i`).
-- `--viruses`: extract only Viruses domain taxa throughout the pipeline.
-- `--keep-human`: retain human-related taxa (default: filtered out).
-- `-d INT / --depth`: rarefaction depth for β-diversity (default: 1000).
-- `-s INT / --seed`: random seed for reproducible β-diversity rarefaction (default: random).
-- `--overwrite`: overwrite the output directory if it already exists.
-
-### **--step mpa** (Step 1)
-- Batch mode: `-i DIR -o DIR` — converts all files in a directory.
-- Single-file mode: `-r FILE -o FILE`.
-
-### **--step combine** (Step 2)
-- `-i FILE [FILE ...]`: one or more MPA files.
-- `-o FILE`: output merged table.
-
-### **--step split** (Step 3)
-- Extracts **phylum, class, order, family, genus, species** into separate text files.
-- Removes human-related reads by default; use `--keep-human` to retain them.
-- Use `--viruses-only` to extract only the Viruses domain.
-
-### **--step process** (Step 4)
-- Removes prefixes (`s__`, `g__`, etc.), replaces underscores with spaces.
-- `-i`: COMBINED.txt (source for sample-name header); `-o`: target txt file.
-
-### **--step csv** (Step 5)
-- Transposes a processed txt file into a CSV with sample names as rows.
-
-### **--step relabund** (Step 6)
-- Calculates relative abundance from a total-counts CSV.
-- `-O FLOAT`: group taxa below FLOAT % into `Other (<FLOAT%)`.
-
-### **--step diversity** (Step 7)
-- Shannon, Pielou & Chao1 for α-diversity.
-- Bray-Curtis & Jaccard for β-diversity.
-- `-d INT`: rarefaction depth for β-diversity (default: 1000).
-- `-s INT`: random seed for reproducible rarefaction (default: random — results vary between runs).
-
-</details>
-
 ## Example Output Structure
+
 After running the full pipeline, the output directory will look like this:
-```
+
+```text
 results/
 ├─ counts/                 # Total abundance CSV output
 │  ├─ counts_species.csv
@@ -319,7 +323,8 @@ results/
 ```
 
 ## Conclusion
-KrakenParser provides a **simple and automated** way to convert Kraken2 reports into usable CSV files for downstream analysis. You can run the **full pipeline** with a single command or use **individual scripts** as needed.
+
+KrakenParser provides a **simple and automated** way to convert Kraken2 reports into usable CSV files for downstream analysis. You can run the **full pipeline** with a single command or use **individual modules** as needed.
 
 For any issues or feature requests, feel free to open an issue on GitHub!
 
