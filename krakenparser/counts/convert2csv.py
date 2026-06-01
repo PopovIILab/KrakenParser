@@ -31,7 +31,7 @@ def convert_to_csv(input_file: str, output_file: str) -> None:
 
 @app.callback(invoke_without_command=True)
 def main(
-    ctx: typer.Context,  # Контекст для нативного хелпа
+    ctx: typer.Context,
     input_file: Optional[str] = typer.Option(
         None,
         "-i",

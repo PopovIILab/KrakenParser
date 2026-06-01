@@ -57,7 +57,7 @@ def combine_mpa(in_files: list[Path], o_file: Path) -> None:
                 split_vals = classification.split("|")
                 curr_parent = ""
                 for i in range(len(split_vals)):
-                    test_val = "|".join(split_vals[:i])  # при i=0 → ""
+                    test_val = "|".join(split_vals[:i])
                     if test_val in values:
                         curr_parent = test_val
 
@@ -102,7 +102,7 @@ def combine_mpa(in_files: list[Path], o_file: Path) -> None:
 
 @app.callback(invoke_without_command=True)
 def main(
-    ctx: typer.Context,  # Контекст для работы с хелпом
+    ctx: typer.Context,
     in_files: Optional[list[Path]] = typer.Option(
         None,
         "-i",

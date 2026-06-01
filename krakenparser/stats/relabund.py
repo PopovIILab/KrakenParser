@@ -75,7 +75,7 @@ def calculate_rel_abund(
 
 @app.callback(invoke_without_command=True)
 def main(
-    ctx: typer.Context,  # Контекст для вызова хелпа
+    ctx: typer.Context,
     input_file: Optional[Path] = typer.Option(
         None,
         "-i",
