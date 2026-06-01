@@ -1,22 +1,32 @@
 #!/usr/bin/env python
 
-import argparse
 import logging
+import sys
 import warnings
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
+import typer
 
 from krakenparser.utils import ensure_output_dir
 
 _log = logging.getLogger(__name__)
 
+app = typer.Typer(
+    name="relabund",
+    add_completion=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
-def calculate_rel_abund(input_file, output_file, other_threshold=None):
+
+def calculate_rel_abund(
+    input_file: Path, output_file: Path, other_threshold: Optional[float] = None
+) -> None:
     in_path = Path(input_file)
     if not in_path.is_file():
         raise FileNotFoundError(f"Input file not found: {in_path}")
-    out_path = ensure_output_dir(output_file, is_file=True)
+    out_path = ensure_output_dir(str(output_file), is_file=True)
 
     # Load counts table
     df = pd.read_csv(in_path)
@@ -63,26 +73,48 @@ def calculate_rel_abund(input_file, output_file, other_threshold=None):
     _log.info("Relative abundance saved as '%s'.", output_file)
 
 
-def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    parser = argparse.ArgumentParser(
-        description="Calculates taxa relative abundance and saves it to a CSV file."
-    )
-    parser.add_argument(
-        "-i", "--input", required=True, help="Input CSV file with counts."
-    )
-    parser.add_argument("-o", "--output", required=True, help="Output CSV file path.")
-    parser.add_argument(
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,  # Контекст для вызова хелпа
+    input_file: Optional[Path] = typer.Option(
+        None,
+        "-i",
+        "--input",
+        help="Input CSV file with counts.",
+    ),
+    output_file: Optional[Path] = typer.Option(
+        None,
+        "-o",
+        "--output",
+        help="Output CSV file path.",
+    ),
+    other: Optional[float] = typer.Option(
+        None,
         "-O",
         "--other",
-        type=float,
-        default=None,
-        help="Threshold for grouping taxa into 'Other (<X%%)'. Example: -O 3.5",
-    )
+        help="Threshold for grouping taxa into 'Other (<X%)'. Example: -O 3.5",
+    ),
+) -> None:
+    """Calculates taxa relative abundance and saves it to a CSV file."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    args = parser.parse_args()
-    calculate_rel_abund(args.input, args.output, args.other)
+    if input_file is None and output_file is None:
+        print(ctx.get_help())
+        raise typer.Exit()
+
+    if not input_file or not output_file:
+        print(
+            "Error: Missing required options '-i / --input' and '-o / --output'.",
+            file=sys.stderr,
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        calculate_rel_abund(input_file, output_file, other)
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
-    main()
+    app()
