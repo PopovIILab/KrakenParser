@@ -1,17 +1,24 @@
 #!/usr/bin/env python
 
-import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pandas as pd
+import typer
 from scipy.spatial.distance import pdist, squareform
 
 from krakenparser.utils import ensure_output_dir
 
 _log = logging.getLogger(__name__)
+
+app = typer.Typer(
+    name="diversity",
+    add_completion=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 
 def shannon_index(counts):
@@ -48,8 +55,8 @@ def _subsample_counts(
     return np.bincount(sampled, minlength=len(counts)).astype(int)
 
 
-def calc_alpha_div(df, output_path):
-    out_path = ensure_output_dir(output_path, is_file=False)
+def calc_alpha_div(df: pd.DataFrame, output_path: Path) -> None:
+    out_path = ensure_output_dir(str(output_path), is_file=False)
     results = []
     for sample_id, row in df.iterrows():
         counts = row.values
@@ -69,8 +76,13 @@ def calc_alpha_div(df, output_path):
     )
 
 
-def calc_beta_div(df, output_path, rarefaction_depth, seed=None):
-    out_path = ensure_output_dir(output_path, is_file=False)
+def calc_beta_div(
+    df: pd.DataFrame,
+    output_path: Path,
+    rarefaction_depth: int,
+    seed: Optional[int] = None,
+) -> None:
+    out_path = ensure_output_dir(str(output_path), is_file=False)
     rng = np.random.default_rng(seed)
     rarefied_counts: list[np.ndarray] = []
     sample_ids: list[str] = []
@@ -107,50 +119,67 @@ def calc_beta_div(df, output_path, rarefaction_depth, seed=None):
     )
 
 
-def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    parser = argparse.ArgumentParser(description="Calculate α & β-diversities.")
-    parser.add_argument(
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    input_file: Optional[Path] = typer.Option(
+        None,
         "-i",
         "--input",
-        required=True,
         help="Input total count table CSV (species level).",
-    )
-    parser.add_argument("-o", "--output", required=True, help="Output directory path.")
-    parser.add_argument(
+    ),
+    output_dir: Optional[Path] = typer.Option(
+        None,
+        "-o",
+        "--output",
+        help="Output directory path.",
+    ),
+    depth: int = typer.Option(
+        1000,
         "-d",
         "--depth",
-        type=int,
-        default=1000,
-        help="Rarefaction depth for β diversity (default: 1000).",
-    )
-    parser.add_argument(
+        help="Rarefaction depth for β diversity.",
+    ),
+    seed: Optional[int] = typer.Option(
+        None,
         "-s",
         "--seed",
-        type=int,
-        default=None,
         help="Random seed for reproducible rarefaction (default: random).",
-    )
-    args = parser.parse_args()
+    ),
+) -> None:
+    """Calculate α & β-diversities for microbial communities."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+    if input_file is None and output_dir is None:
+        print(ctx.get_help())
+        raise typer.Exit()
+
+    if not input_file or not output_dir:
+        print(
+            "Error: Missing required options '-i / --input' and '-o / --output'.",
+            file=sys.stderr,
+        )
+        raise typer.Exit(code=1)
 
     seed_label = (
-        str(args.seed)
-        if args.seed is not None
-        else "not set (results will vary between runs)"
+        str(seed) if seed is not None else "not set (results will vary between runs)"
     )
-    _log.info("Rarefaction depth: %d | seed: %s", args.depth, seed_label)
+    _log.info("Rarefaction depth: %d | seed: %s", depth, seed_label)
 
-    input_file = Path(args.input)
     if not input_file.is_file():
-        sys.exit(f"Error: input file not found: {input_file}")
-    output_dir = Path(args.output)
-    output_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Error: input file not found: {input_file}", file=sys.stderr)
+        raise typer.Exit(code=1)
 
+    output_dir.mkdir(parents=True, exist_ok=True)
     df = pd.read_csv(input_file, index_col=0)
 
-    calc_alpha_div(df, output_dir)
-    calc_beta_div(df, output_dir, args.depth, seed=args.seed)
+    try:
+        calc_alpha_div(df, output_dir)
+        calc_beta_div(df, output_dir, depth, seed=seed)
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
-    main()
+    app()
