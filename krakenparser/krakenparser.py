@@ -60,19 +60,31 @@ def main_callback(
         None, "-o", "--output", help="Output directory."
     ),
     viruses: bool = typer.Option(
-        False, "--viruses", help="Extract only VIRUSES domain taxa in the pipeline."
+        False,
+        "-viruses",
+        "--viruses",
+        help="Extract only VIRUSES domain taxa in the pipeline.",
     ),
     bacteria: bool = typer.Option(
-        False, "--bacteria", help="Extract only BACTERIA domain taxa in the pipeline."
+        False,
+        "-bacteria",
+        "--bacteria",
+        help="Extract only BACTERIA domain taxa in the pipeline.",
     ),
     fungi: bool = typer.Option(
-        False, "--fungi", help="Extract only FUNGI kingdom taxa in the pipeline."
+        False,
+        "-fungi",
+        "--fungi",
+        help="Extract only FUNGI kingdom taxa in the pipeline.",
     ),
     archaea: bool = typer.Option(
-        False, "--archaea", help="Extract only ARCHAEA domain taxa in the pipeline."
+        False,
+        "-archaea",
+        "--archaea",
+        help="Extract only ARCHAEA domain taxa in the pipeline.",
     ),
     keep_human: bool = typer.Option(
-        False, "--keep-human", help="Do not filter human-related taxa."
+        False, "-keep-human", "--keep-human", help="Do not filter human-related taxa."
     ),
     version: Optional[bool] = typer.Option(
         None,
@@ -90,6 +102,7 @@ def main_callback(
     ),
     overwrite: bool = typer.Option(
         False,
+        "-overwrite",
         "--overwrite",
         help="Overwrite the output directory if it already exists.",
     ),
