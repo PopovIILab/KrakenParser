@@ -69,24 +69,26 @@ Usage: KrakenParser [OPTIONS] COMMAND [ARGS]...
  to see options for a specific step.                                            
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --input       -i      PATH     Directory containing Kraken2 report files.    │
-│ --output      -o      PATH     Output directory.                             │
-│ --viruses                      Extract only VIRUSES domain taxa in the       │
-│                                pipeline.                                     │
-│ --bacteria                     Extract only BACTERIA domain taxa in the      │
-│                                pipeline.                                     │
-│ --fungi                        Extract only FUNGI kingdom taxa in the        │
-│                                pipeline.                                     │
-│ --archaea                      Extract only ARCHAEA domain taxa in the       │
-│                                pipeline.                                     │
-│ --keep-human                   Do not filter human-related taxa.             │
-│ --version     -V               Show version and exit.                        │
-│ --depth       -d      INTEGER  Rarefaction depth for β-diversity.            │
-│                                [default: 1000]                               │
-│ --seed        -s      INTEGER  Random seed for reproducible rarefaction.     │
-│ --overwrite                    Overwrite the output directory if it already  │
-│                                exists.                                       │
-│ --help        -h               Show this message and exit.                   │
+│ --input       -i               PATH     Directory containing Kraken2 report  │
+│                                         files.                               │
+│ --output      -o               PATH     Output directory.                    │
+│ --viruses     -viruses                  Extract only VIRUSES domain taxa in  │
+│                                         the pipeline.                        │
+│ --bacteria    -bacteria                 Extract only BACTERIA domain taxa in │
+│                                         the pipeline.                        │
+│ --fungi       -fungi                    Extract only FUNGI kingdom taxa in   │
+│                                         the pipeline.                        │
+│ --archaea     -archaea                  Extract only ARCHAEA domain taxa in  │
+│                                         the pipeline.                        │
+│ --keep-human  -keep-human               Do not filter human-related taxa.    │
+│ --version     -V                        Show version and exit.               │
+│ --depth       -d               INTEGER  Rarefaction depth for β-diversity.   │
+│                                         [default: 1000]                      │
+│ --seed        -s               INTEGER  Random seed for reproducible         │
+│                                         rarefaction.                         │
+│ --overwrite   -overwrite                Overwrite the output directory if it │
+│                                         already exists.                      │
+│ --help        -h                        Show this message and exit.          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Advanced (Step-by-step pipeline control) ───────────────────────────────────╮
 │ mpa        Convert a Kraken2 report to MetaPhlAn (MPA) format.               │
@@ -319,7 +321,7 @@ results/
 │     ├─ counts_genus.txt
 │     ├─ ...
 │     └─ counts_phylum.txt
-└─ krakenparser.log         # Pipeline execution logs
+└─ krakenparser.log        # Pipeline execution logs
 ```
 
 ## Conclusion
