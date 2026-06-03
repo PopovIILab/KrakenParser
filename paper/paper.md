@@ -29,7 +29,7 @@ Comparative metagenomics and microbiome studies depend fundamentally on cross-sa
 
 # Implementation and Software Design
 
-`KrakenParser` is implemented in Python 3 (distributed via PyPI as `krakenparser`) and follows a modular architecture split into three distinct operational layers: Data Processing, Statistical Analysis, and Visualization. The pipeline can be executed in an end-to-end automated mode via the `--complete` flag or controlled through granular subcommands.
+`KrakenParser` is implemented in Python 3 (distributed via PyPI as `krakenparser`) and follows a modular architecture split into three distinct operational layers: Data Processing, Statistical Analysis, and Visualization. The pipeline can be executed in an end-to-end automated mode by providing global input and output paths directly to the main command, or controlled step-by-step through granular subcommands.
 
 ## Data Processing and Filtering
 Individual taxonomic reports are programmatically parsed, converted into MetaPhlAn (MPA) tables, and merged into a unified cross-sample master count matrix. This matrix is subsequently deconstructed into distinct tables for each major taxonomic rank. During deconstruction, `KrakenParser` purges internal structural prefixes (e.g., stripping `s__` from species names) and normalizes taxonomic strings by replacing underscores with spaces to ensure human readability and compatibility with downstream software.
@@ -41,7 +41,7 @@ Following matrix generation, the statistical module computes normalization metri
 
 * **Relative Abundance:** Normalizes absolute counts into percentage distributions using the formula: $\text{Relative Abundance} = \left( \frac{\text{Number of individuals of taxa}}{\text{Total number of individuals of all taxa}} \right) \times 100$. A user-defined abundance threshold aggregates rare background taxa into a consolidated `Other` category to simplify downstream parsing and plotting.
 * **Alpha Diversity:** Calculates *Shannon* [@shannon1948mathematical], *Pielou’s evenness* [@pielou1966measurement], and *Chao1* [@chao2002estimating] indices. To mitigate artifacts caused by uneven sequencing depths across different sequencing runs, a built-in rarefaction procedure subsamples reads to a uniform user-specified depth prior to calculating indices.
-* **Beta Diversity:** Computes compositional dissimilarity between samples via *Bray-Curtis* [@bray10jt] and *Jaccard* [@jaccard1901etude] distance metrics, exporting standard distance matrices ready for ordination (e.g., PCoA or NMDS).
+* **Beta Diversity:** Computes compositional dissimilarity between samples via *Bray-Curtis* [@bray10jt] and *Jaccard* [@jaccard1901etude] distance metrics, exporting standard distance matrices ready for ordination.
 
 ## Visualization
 The `kpplot` module utilizes an object-oriented design inheriting from a unified base configuration class (`KpPlotBase`), enforcing consistent rendering properties such as DPI, bounding box scaling, and layout properties. Built on top of `matplotlib` [@Hunter2007], `pandas` [@reback2020pandas], and `seaborn` [@Waskom2021], the visualization engine exposes four primary programmatic layouts:
@@ -53,7 +53,7 @@ The `kpplot` module utilizes an object-oriented design inheriting from a unified
 
 # Research Impact
 
-The functional reliability and execution integrity of `KrakenParser` are validated via automated continuous integration workflows. The utility and user readiness of the software were demonstrated during the [2025 “Bioinformatics Bootcamp”](https://pish.itmo.ru/genomics-bootcamp) hackathon organized by ITMO University. Furthermore, the core structural prototype of this tool was successfully utilized for large-scale metagenomic data analysis by Popov et al., 2025 [@ijms26135941].
+The functional reliability and execution integrity of `KrakenParser` are validated via automated continuous integration workflows. The utility and user readiness of the software were demonstrated during the [2025 “Bioinformatics Bootcamp”](https://pish.itmo.ru/genomics-bootcamp) hackathon. Furthermore, the core structural prototype of this tool was successfully utilized for large-scale metagenomic data analysis by Popov et al., 2025 [@ijms26135941].
 
 # Acknowledgements
 
