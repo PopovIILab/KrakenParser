@@ -55,4 +55,8 @@ The `kpplot` module utilizes an object-oriented design inheriting from a unified
 
 The functional reliability and execution integrity of `KrakenParser` are validated via automated continuous integration workflows. The utility and user readiness of the software were demonstrated during the [2025 “Bioinformatics Bootcamp”](https://pish.itmo.ru/genomics-bootcamp) hackathon. Furthermore, the core structural prototype of this tool was successfully utilized for large-scale metagenomic data analysis by Popov et al., 2025 [@ijms26135941].
 
+# AI usage disclosure
+
+Generative AI tools were used during the development of this work to assist with code refactoring, documentation drafting, and manuscript text editing. All software design decisions, implementation, validation, and scientific interpretation were performed and reviewed by the authors. No generative AI tools were used to generate or analyze research data, and all results reported are reproducible from the publicly available source code and documentation.
+
 # References
