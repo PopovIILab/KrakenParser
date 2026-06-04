@@ -1,4 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+"""Post-processing matrix utility for metadata refinement and taxonomic sanitization.
+
+This module cleans upstream pipeline artifacts by removing technical file extensions
+from sample headers and restoring canonical spaces to underscore-separated taxonomic
+nomenclature strings (e.g., converting 's__Escherichia_coli' to 'Escherichia coli').
+File mutations are executed via atomic filesystem transactions.
+"""
 
 import logging
 import os
@@ -9,9 +16,11 @@ from typing import Optional
 
 import typer
 
-_log = logging.getLogger(__name__)
+# Initialize module-level isolated logger
+_log: logging.Logger = logging.getLogger(__name__)
 
-app = typer.Typer(
+# Dedicated Typer routing application instantiation
+app: typer.Typer = typer.Typer(
     name="process",
     add_completion=False,
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -19,63 +28,95 @@ app = typer.Typer(
 
 
 def modify_taxa_names(line: str) -> str:
-    prefixes = ["s__", "g__", "f__", "o__", "c__", "p__"]
+    """Sanitize taxonomic names by replacing internal underscores with spaces.
+
+    Scans the line for standard taxonomic rank prefixes (s__, g__, etc.). If found,
+    the primary taxon descriptor string is decoupled, sanitized of internal
+    technical underscores, and reconstructed while preserving tailing tab metrics.
+
+    Args:
+        line: A raw text row from the matrix containing taxonomic descriptors.
+
+    Returns:
+        str: The structurally preserved string with restored space characters.
+    """
+    prefixes: list[str] = ["s__", "g__", "f__", "o__", "c__", "p__"]
     for prefix in prefixes:
         if line.startswith(prefix):
-            parts = line[len(prefix) :].split("\t")
+            # Clean string parsing utilizing standard tab separation matrices
+            parts: list[str] = line.removeprefix(prefix).split("\t")
             parts[0] = parts[0].replace("_", " ")
             return "\t".join(parts)
     return line
 
 
-def process_files(source_file: str, destination_file: str) -> None:
-    src_path = Path(source_file)
-    if not src_path.is_file():
-        raise FileNotFoundError(f"Source file not found: {src_path}")
-    dest_path = Path(destination_file)
-    if not dest_path.is_file():
-        raise FileNotFoundError(f"Destination file not found: {dest_path}")
+def process_files(source_file: Path, destination_file: Path) -> None:
+    """Synchronize matrix headers and sanitize taxonomic profiles atomically.
 
-    # Read the first line from the source file and modify it
-    with open(src_path, "r") as file:
-        first_line_source = file.readline()
-    modified_first_line = "\t".join(
+    Extracts clean cohort descriptors from the header of a source tracker,
+    applies string cleaning to a targeted taxonomy mapping spreadsheet,
+    and updates the destination file utilizing atomic replacement blocks.
+
+    Args:
+        source_file: Validated Path to the template matrix containing pristine headers.
+        destination_file: Target Path to the file undergoing line-by-line taxonomy cleaning.
+
+    Raises:
+        FileNotFoundError: Triggered if either the source or destination targets are absent.
+    """
+    if not source_file.is_file():
+        raise FileNotFoundError(f"Source file not found: {source_file}")
+    if not destination_file.is_file():
+        raise FileNotFoundError(f"Destination file not found: {destination_file}")
+
+    # Step 1: Read and truncate raw pipeline suffixes from sample headers
+    with open(source_file, "r", encoding="utf-8") as file:
+        first_line_source: str = file.readline()
+
+    modified_first_line: str = "\t".join(
         word.split(".")[0] for word in first_line_source.split()
     )
 
-    # Read all content from the destination file and modify taxa names
-    with open(dest_path, "r") as file:
-        lines = file.readlines()
-    modified_lines = [modify_taxa_names(line.strip()) for line in lines]
+    # Step 2: Read targets and map taxonomic updates lazily across lists
+    with open(destination_file, "r", encoding="utf-8") as file:
+        lines: list[str] = file.readlines()
 
-    # Combine the modified first line with the modified content of the destination file
-    updated_content = modified_first_line + "\n" + "\n".join(modified_lines)
+    modified_lines: list[str] = [modify_taxa_names(line.strip()) for line in lines]
 
-    # Write atomically: write to a temp file in the same directory, then replace
+    # Step 3: Integrate matrices and commit layout modifications to disk
+    joined_lines: str = "\n".join(modified_lines)
+    updated_content: str = f"{modified_first_line}\n{joined_lines}"
+
+    # Secure atomic writer operations targeting adjacent scratch space regions
     with tempfile.NamedTemporaryFile(
-        mode="w", dir=dest_path.parent, delete=False, suffix=".tmp"
+        mode="w",
+        dir=destination_file.parent,
+        delete=False,
+        suffix=".tmp",
+        encoding="utf-8",
     ) as tmp:
         tmp.write(updated_content)
-        tmp_path = tmp.name
-    os.replace(tmp_path, dest_path)
+        tmp_path: str = tmp.name
 
-    _log.info(f"Processed {destination_file} successfully.")
+    # Commit transactions atomically across POSIX virtual environments
+    os.replace(tmp_path, destination_file)
+    _log.info("Processed '%s' successfully.", destination_file)
 
 
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    input_file: Optional[str] = typer.Option(
+    input_file: Optional[Path] = typer.Option(
         None,
         "-i",
         "--input",
-        help="Path to the source file. This file's first line will be read and modified.",
+        help="Path to the source file (used to extract and truncate header labels).",
     ),
-    output_file: Optional[str] = typer.Option(
+    output_file: Optional[Path] = typer.Option(
         None,
         "-o",
         "--output",
-        help="Path to the destination file. This file's contents will be updated with cleaned taxa names.",
+        help="Path to the destination matrix undergoing taxonomic name sanitation.",
     ),
 ) -> None:
     """Reads a source file, processes its first line, modifies taxa names in a destination file, and updates it."""
