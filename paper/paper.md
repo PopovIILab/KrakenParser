@@ -32,11 +32,13 @@ Comparative metagenomics and microbiome studies depend fundamentally on cross-sa
 `KrakenParser` is implemented in Python 3 (distributed via PyPI as `krakenparser`) and follows a modular architecture split into three distinct operational layers: Data Processing, Statistical Analysis, and Visualization. The pipeline can be executed in an end-to-end automated mode by providing global input and output paths directly to the main command, or controlled step-by-step through granular subcommands.
 
 ## Data Processing and Filtering
+
 Individual taxonomic reports are programmatically parsed, converted into MetaPhlAn (MPA) tables, and merged into a unified cross-sample master count matrix. This matrix is subsequently deconstructed into distinct tables for each major taxonomic rank. During deconstruction, `KrakenParser` purges internal structural prefixes (e.g., stripping `s__` from species names) and normalizes taxonomic strings by replacing underscores with spaces to ensure human readability and compatibility with downstream software.
 
 The core data engine features flexible filtering mechanisms. Users can selectively isolate or exclude specific biological domains or kingdoms (Bacteria, Viruses, Archaea, Fungi) during extraction. While non-target host reads (e.g., human contamination) are filtered out by default to focus on microbial signatures, the `--keep-human` flag preserves host read counts within the output matrices. Crucially, `--keep-human` can be combined concurrently with domain-specific filters, allowing the simultaneous evaluation of host-to-microbe or host-to-pathogen abundance ratios within a single run.
 
 ## Statistical Analysis
+
 Following matrix generation, the statistical module computes normalization metrics and ecological indices directly:
 
 * **Relative Abundance:** Normalizes absolute counts into percentage distributions using the formula: $\text{Relative Abundance} = \left( \frac{\text{Number of individuals of taxa}}{\text{Total number of individuals of all taxa}} \right) \times 100$. A user-defined abundance threshold aggregates rare background taxa into a consolidated `Other` category to simplify downstream parsing and plotting.
@@ -44,6 +46,7 @@ Following matrix generation, the statistical module computes normalization metri
 * **Beta Diversity:** Computes compositional dissimilarity between samples via *Bray-Curtis* [@bray10jt] and *Jaccard* [@jaccard1901etude] distance metrics, exporting standard distance matrices ready for ordination.
 
 ## Visualization
+
 The `kpplot` module utilizes an object-oriented design inheriting from a unified base configuration class (`KpPlotBase`), enforcing consistent rendering properties such as DPI, bounding box scaling, and layout properties. Built on top of `matplotlib` [@Hunter2007], `pandas` [@reback2020pandas], and `seaborn` [@Waskom2021], the visualization engine exposes four primary programmatic layouts:
 
 * **Stacked Bar Plots:** For comparing relative taxonomic proportions across multi-sample cohorts.
