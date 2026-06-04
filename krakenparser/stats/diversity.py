@@ -1,9 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+"""Statistical module for calculating microbial community alpha and beta diversities.
+
+This module provides industry-standard ecological metrics including Shannon Index,
+Pielou's Evenness, and Chao1 Richness for alpha diversity, alongside rarefaction-backed
+Bray-Curtis and Jaccard distance metrics for beta diversity analysis.
+"""
 
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -12,54 +18,117 @@ from scipy.spatial.distance import pdist, squareform
 
 from krakenparser.utils import ensure_output_dir
 
-_log = logging.getLogger(__name__)
+# Initialize module-level isolated logger
+_log: logging.Logger = logging.getLogger(__name__)
 
-app = typer.Typer(
+# Dedicated Typer routing application instantiation
+app: typer.Typer = typer.Typer(
     name="diversity",
     add_completion=False,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
 
-def shannon_index(counts):
-    counts = np.array(counts)
-    counts = counts[counts > 0]
-    proportions = counts / counts.sum()
-    return -np.sum(proportions * np.log(proportions))
+def shannon_index(counts: np.ndarray | Sequence[float] | Sequence[int]) -> float:
+    """Calculate the Shannon-Wiener diversity index (H') for a count vector.
+
+    The index is computed using the formula: H' = -sum(p_i * ln(p_i)),
+    where p_i is the relative abundance of each present taxon.
+
+    Args:
+        counts: A sequence or array of absolute taxonomic abundance counts.
+
+    Returns:
+        float: The calculated Shannon diversity index.
+    """
+    counts_arr: np.ndarray = np.array(counts)
+    nonzero_counts: np.ndarray = counts_arr[counts_arr > 0]
+
+    if nonzero_counts.size == 0:
+        return 0.0
+
+    proportions: np.ndarray = nonzero_counts / nonzero_counts.sum()
+    return float(-np.sum(proportions * np.log(proportions)))
 
 
-def pielou_evenness(counts):
-    counts = np.asarray(counts)
-    S = int(np.sum(counts > 0))
-    if S <= 1:
-        return np.nan
-    return shannon_index(counts) / np.log(S)
+def pielou_evenness(counts: np.ndarray | Sequence[float] | Sequence[int]) -> float:
+    """Calculate Pielou's Evenness index (J') for a count vector.
+
+    The index is computed as: J' = H' / ln(S), where H' is the Shannon index
+    and S is the total number of observed species (richness).
+
+    Args:
+        counts: A sequence or array of absolute taxonomic abundance counts.
+
+    Returns:
+        float: Pielou's evenness value, or np.nan if species richness <= 1.
+    """
+    counts_arr: np.ndarray = np.asarray(counts)
+    species_richness: int = int(np.sum(counts_arr > 0))
+
+    if species_richness <= 1:
+        return float(np.nan)
+
+    return shannon_index(counts_arr) / float(np.log(species_richness))
 
 
-def chao1_index(counts):
-    counts = np.array(counts)
-    S_obs = np.sum(counts > 0)
-    F1 = np.sum(counts == 1)
-    F2 = np.sum(counts == 2)
-    if F2 == 0:
-        return S_obs + F1 * (F1 - 1) / 2
-    return S_obs + (F1 * F1) / (2 * F2)
+def chao1_index(counts: np.ndarray | Sequence[float] | Sequence[int]) -> float:
+    """Calculate the Chao1 non-parametric richness estimator for a community.
+
+    Accounts for rare unsampled species based on singletons (F1) and doubletons (F2).
+    Formula: S_chao1 = S_obs + (F1 * (F1 - 1)) / (2 * (F2 + 1)) if F2 == 0
+    else S_obs + (F1^2) / (2 * F2).
+
+    Args:
+        counts: A sequence or array of absolute taxonomic abundance counts.
+
+    Returns:
+        float: The estimated total species richness.
+    """
+    counts_arr: np.ndarray = np.array(counts)
+    species_observed: int = int(np.sum(counts_arr > 0))
+    singletons: int = int(np.sum(counts_arr == 1))
+    doubletons: int = int(np.sum(counts_arr == 2))
+
+    if doubletons == 0:
+        return float(species_observed + singletons * (singletons - 1) / 2)
+
+    return float(species_observed + (singletons * singletons) / (2 * doubletons))
 
 
 def _subsample_counts(
     counts: np.ndarray, n: int, rng: np.random.Generator
 ) -> np.ndarray:
-    """Rarefy counts to n reads by sampling without replacement."""
-    indices = np.repeat(np.arange(len(counts)), counts)
-    sampled = rng.choice(indices, size=n, replace=False)
+    """Rarefy absolute abundance counts to a uniform depth without replacement.
+
+    Args:
+        counts: Array of absolute integers representing community abundances.
+        n: Targeted sequencing read subsampling depth (rarefaction size).
+        rng: An instantiated NumPy random generator state.
+
+    Returns:
+        np.ndarray: A new rarefied absolute abundance vector matching the source shape.
+    """
+    indices: np.ndarray = np.repeat(np.arange(len(counts)), counts)
+    sampled: np.ndarray = rng.choice(indices, size=n, replace=False)
     return np.bincount(sampled, minlength=len(counts)).astype(int)
 
 
 def calc_alpha_div(df: pd.DataFrame, output_path: Path) -> None:
-    out_path = ensure_output_dir(str(output_path), is_file=False)
-    results = []
+    """Compute alpha diversity vectors across all profiles within a count matrix.
+
+    Generates a structured CSV data table containing Shannon, Pielou, and Chao1
+    indices mapped natively to individual sample identifiers.
+
+    Args:
+        df: Input DataFrame where indices represent samples and columns indicate taxa.
+        output_path: Target directory Path where results are exported.
+    """
+    out_path: Path = ensure_output_dir(output_path, is_file=False)
+    results: list[dict[str, Any]] = []
+
     for sample_id, row in df.iterrows():
-        counts = row.values
+        counts: np.ndarray = row.values
         results.append(
             {
                 "Sample": sample_id,
@@ -68,11 +137,12 @@ def calc_alpha_div(df: pd.DataFrame, output_path: Path) -> None:
                 "Chao1": chao1_index(counts),
             }
         )
-    alpha_df = pd.DataFrame(results).set_index("Sample")
+
+    alpha_df: pd.DataFrame = pd.DataFrame(results).set_index("Sample")
     alpha_df.to_csv(out_path / "alpha_div.csv")
 
     _log.info(
-        f"α-diversity has been successfully calculated and saved to '{output_path}'."
+        "α-diversity has been successfully calculated and saved to '%s'.", output_path
     )
 
 
@@ -82,40 +152,58 @@ def calc_beta_div(
     rarefaction_depth: int,
     seed: Optional[int] = None,
 ) -> None:
-    out_path = ensure_output_dir(str(output_path), is_file=False)
-    rng = np.random.default_rng(seed)
+    """Compute composition dissimilarity matrices utilizing uniform rarefied values.
+
+    Applies absolute read-filtering limits, performs non-replacement subsampling,
+    and scales community metrics via Bray-Curtis and Jaccard distance calculators.
+
+    Args:
+        df: Input DataFrame where indices represent samples and columns indicate taxa.
+        output_path: Target directory Path where results are exported.
+        rarefaction_depth: Integer specifying the strict depth threshold for subsampling.
+        seed: Random state state-initializer utilized to force deterministic rarefaction.
+
+    Raises:
+        ValueError: Triggered if less than two samples fulfill the minimum rarefaction depth.
+    """
+    out_path: Path = ensure_output_dir(output_path, is_file=False)
+    rng: np.random.Generator = np.random.default_rng(seed)
     rarefied_counts: list[np.ndarray] = []
     sample_ids: list[str] = []
 
+    # Filter cohorts and compress vectors to secure computational scaling equity
     for sample, row in df.iterrows():
-        counts = np.round(row.values).astype(int)
+        counts: np.ndarray = np.round(row.values).astype(int)
         if counts.sum() >= rarefaction_depth:
-            rarefied = _subsample_counts(counts, n=rarefaction_depth, rng=rng)
+            rarefied: np.ndarray = _subsample_counts(
+                counts, n=rarefaction_depth, rng=rng
+            )
             rarefied_counts.append(rarefied)
             sample_ids.append(str(sample))
 
     if len(rarefied_counts) < 2:
         raise ValueError("Not enough samples passed the rarefaction threshold.")
 
-    X = np.array(rarefied_counts, dtype=float)
-    idx = pd.Index(sample_ids)
+    matrix_x: np.ndarray = np.array(rarefied_counts, dtype=float)
+    index_labels: pd.Index = pd.Index(sample_ids)
 
-    bray_df = pd.DataFrame(
-        squareform(pdist(X, metric="braycurtis")),
-        index=idx,
-        columns=idx,
+    # Calculate spatial ecological distance metrics matrices
+    bray_df: pd.DataFrame = pd.DataFrame(
+        squareform(pdist(matrix_x, metric="braycurtis")),
+        index=index_labels,
+        columns=index_labels,
     )
-    jaccard_df = pd.DataFrame(
-        squareform(pdist(X.astype(bool).astype(float), metric="jaccard")),
-        index=idx,
-        columns=idx,
+    jaccard_df: pd.DataFrame = pd.DataFrame(
+        squareform(pdist(matrix_x.astype(bool).astype(float), metric="jaccard")),
+        index=index_labels,
+        columns=index_labels,
     )
 
     bray_df.to_csv(out_path / "beta_div_bray.csv")
     jaccard_df.to_csv(out_path / "beta_div_jaccard.csv")
 
     _log.info(
-        f"β-diversity has been successfully calculated and saved to '{output_path}'."
+        "β-diversity has been successfully calculated and saved to '%s'.", output_path
     )
 
 
@@ -161,7 +249,7 @@ def main(
         )
         raise typer.Exit(code=1)
 
-    seed_label = (
+    seed_label: str = (
         str(seed) if seed is not None else "not set (results will vary between runs)"
     )
     _log.info("Rarefaction depth: %d | seed: %s", depth, seed_label)
@@ -171,7 +259,7 @@ def main(
         raise typer.Exit(code=1)
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    df = pd.read_csv(input_file, index_col=0)
+    df: pd.DataFrame = pd.read_csv(input_file, index_col=0)
 
     try:
         calc_alpha_div(df, output_dir)
