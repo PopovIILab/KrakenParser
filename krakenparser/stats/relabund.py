@@ -1,19 +1,29 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+"""Normalization module for calculating relative abundances of microbial taxa.
+
+This module reshapes wide count matrices into tidy long-format tables, converts
+raw read counts into percentage distributions per sample, filters out zero-abundance
+observations, and optionally aggregates rare background taxa under a unified
+customizable threshold to prevent downstream overplotting.
+"""
 
 import logging
 import sys
 import warnings
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
+import numpy as np
 import pandas as pd
 import typer
 
 from krakenparser.utils import ensure_output_dir
 
-_log = logging.getLogger(__name__)
+# Initialize module-level isolated logger
+_log: logging.Logger = logging.getLogger(__name__)
 
-app = typer.Typer(
+# Dedicated Typer routing application instantiation
+app: typer.Typer = typer.Typer(
     name="relabund",
     add_completion=False,
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -23,22 +33,42 @@ app = typer.Typer(
 def calculate_rel_abund(
     input_file: Path, output_file: Path, other_threshold: Optional[float] = None
 ) -> None:
-    in_path = Path(input_file)
-    if not in_path.is_file():
-        raise FileNotFoundError(f"Input file not found: {in_path}")
-    out_path = ensure_output_dir(str(output_file), is_file=True)
+    """Transform absolute taxonomic counts to relative percentage profiles.
 
-    # Load counts table
-    df = pd.read_csv(in_path)
+    Reshapes data into long format, detects and warns about zero-abundance samples,
+    normalizes counts to a 100% scale, and applies an efficient vector-based
+    threshold filter to bundle low-abundance variants into an 'Other' abstraction.
 
-    # Reshape to long format: Sample_id, taxon, abundance
-    long_df = df.melt(id_vars=["Sample_id"], var_name="taxon", value_name="abundance")
+    Args:
+        input_file: Path to the incoming wide matrix CSV (index or Sample_id required).
+        output_file: Target path where the final long-format normalized CSV is saved.
+        other_threshold: Optional percentage bound (e.g., 3.5). Taxa falling below
+            this value within a sample are aggregated into a generic composite pool.
 
-    # Summarize total abundance per sample (used for percentage calculation)
-    total_abundance = long_df.groupby("Sample_id")["abundance"].transform("sum")
+    Raises:
+        FileNotFoundError: Triggered if the specified input count resource is missing.
+    """
+    if not input_file.is_file():
+        raise FileNotFoundError(f"Input file not found: {input_file}")
 
-    zero_samples = long_df.groupby("Sample_id")["abundance"].sum()
-    zero_samples = zero_samples[zero_samples == 0].index.tolist()
+    out_path: Path = ensure_output_dir(output_file, is_file=True)
+
+    # Load counts table matrix (Wide format: rows=samples, cols=taxa)
+    df: pd.DataFrame = pd.read_csv(input_file)
+
+    # Reshape to long format: Sample_id, taxon, abundance (Tidy data specification)
+    long_df: pd.DataFrame = df.melt(
+        id_vars=["Sample_id"], var_name="taxon", value_name="abundance"
+    )
+
+    # Vectorized total abundance extraction per mapping target profile
+    total_abundance: pd.Series = long_df.groupby("Sample_id")["abundance"].transform(
+        "sum"
+    )
+
+    # Isolate and audit unsequenced or empty background sample profiles
+    sample_sums: pd.Series = long_df.groupby("Sample_id")["abundance"].sum()
+    zero_samples: list[Any] = sample_sums[sample_sums == 0].index.tolist()
     if zero_samples:
         warnings.warn(
             f"Samples with zero total abundance were excluded from output: {zero_samples}",
@@ -46,29 +76,29 @@ def calculate_rel_abund(
             stacklevel=2,
         )
 
-    # Calculate relative abundance (%)
+    # Compute relative composition metric percentage arrays
     long_df["rel_abund_perc"] = (long_df["abundance"] / total_abundance) * 100
 
-    # Drop 0.0 rows
+    # Clean runtime noise by purging absolute zero occurrences
     long_df = long_df[long_df["rel_abund_perc"] > 0.0]
 
-    # Apply "Other" grouping if threshold is specified
+    # Conditionally execute low-abundance grouping utilizing high-performance numpy mapping
     if other_threshold is not None:
-        threshold = float(other_threshold)
-        label = f"Other (<{threshold}%)"
-        long_df["taxon"] = long_df.apply(
-            lambda row: label if row["rel_abund_perc"] < threshold else row["taxon"],
-            axis=1,
-        )
+        threshold: float = float(other_threshold)
+        label: str = f"Other (<{threshold}%)"
 
-    # Summarize final percentages
-    result = (
+        # High-performance Vectorized assignment replacing legacy row-wise df.apply loop
+        threshold_mask: pd.Series = long_df["rel_abund_perc"] < threshold
+        long_df["taxon"] = np.where(threshold_mask, label, long_df["taxon"])
+
+    # Aggregate final percentage statistics collapsed under composite groups if applied
+    result: pd.DataFrame = (
         long_df.groupby(["Sample_id", "taxon"], as_index=False)["rel_abund_perc"]
         .sum()
         .sort_values(["Sample_id", "rel_abund_perc"], ascending=[True, False])
     )
 
-    # Save to CSV
+    # Flush metrics out to structured storage layout
     result.to_csv(out_path, index=False)
     _log.info("Relative abundance saved as '%s'.", output_file)
 
