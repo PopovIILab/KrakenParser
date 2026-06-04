@@ -1,8 +1,9 @@
-#!/usr/bin/env python
-"""KrakenParser: Convert Kraken2 Reports to CSV and analyze microbial diversity.
+#!/usr/bin/env python3
+"""Main command-line interface entry point for KrakenParser.
 
-Built with native Typer subcommands while preserving a direct root interface
-for the full pipeline execution without the 'run' keyword.
+This module orchestrates the entire KrakenParser suite, exposing an end-to-end
+automated pipeline alongside granular subcommands for step-by-step control
+over metagenomic report parsing, normalization, and statistical analysis.
 """
 
 import logging
@@ -23,18 +24,21 @@ from krakenparser.pipeline import run_pipeline
 from krakenparser.stats.diversity import app as diversity_app
 from krakenparser.stats.relabund import app as relabund_app
 
+# Fetch package version dynamically from metadata or fall back to unknown
 try:
-    __version__ = _pkg_version("krakenparser")
+    __version__: str = _pkg_version("krakenparser")
 except _PNF:
     __version__ = "unknown"
 
-app = typer.Typer(
+# Initialize primary Typer interface with global configuration
+app: typer.Typer = typer.Typer(
     add_completion=False,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
-PANEL_NAME = "Advanced (Step-by-step pipeline control)"
+PANEL_NAME: str = "Advanced (Step-by-step pipeline control)"
 
+# Register individual step subcommands under a isolated help panel
 app.add_typer(mpa_app, name="mpa", rich_help_panel=PANEL_NAME)
 app.add_typer(combine_app, name="combine", rich_help_panel=PANEL_NAME)
 app.add_typer(split_app, name="split", rich_help_panel=PANEL_NAME)
@@ -45,6 +49,14 @@ app.add_typer(diversity_app, name="diversity", rich_help_panel=PANEL_NAME)
 
 
 def _version_callback(value: bool) -> None:
+    """Eager callback executing the version flag logic.
+
+    Args:
+        value: Boolean trigger provided by the Typer parameter evaluation.
+
+    Raises:
+        typer.Exit: Gracefully terminates the runtime execution upon displaying version.
+    """
     if value:
         print(f"KrakenParser {__version__}")
         raise typer.Exit()
@@ -118,18 +130,20 @@ def main_callback(
 
     Each step behaves as an independent tool. Type 'krakenparser <command> --help' to see options for a specific step.
     """
-
+    # Prevent execution loop if the engine passes control down to registered subcommands
     if ctx.invoked_subcommand is not None:
         return
 
+    # Execute monolithic end-to-end automation workflow if input targets are declared
     if input_dir:
         print("KrakenParser by Ilia V. Popov")
 
-        out_path = output_dir if output_dir else input_dir.parent
+        out_path: Path = output_dir if output_dir else input_dir.parent
         out_path.mkdir(parents=True, exist_ok=True)
-        log_file_path = out_path / "krakenparser.log"
+        log_file_path: Path = out_path / "krakenparser.log"
 
-        log_handler = logging.FileHandler(log_file_path, mode="w")
+        # Dynamically attach logging engine dedicated to current run output context
+        log_handler: logging.FileHandler = logging.FileHandler(log_file_path, mode="w")
         log_handler.setFormatter(logging.Formatter("%(message)s"))
         logging.basicConfig(level=logging.INFO, handlers=[log_handler])
 
@@ -153,12 +167,13 @@ def main_callback(
         print("All steps completed successfully!")
         print(f"Logs saved to {log_file_path}")
 
-        out_str = out_path.as_posix()
+        out_str: str = out_path.as_posix()
 
-        has_custom_depth = (
+        # Interrogate parameter sources to tailor downstream recommendations accurately
+        has_custom_depth: bool = (
             str(ctx.get_parameter_source("depth")) != "ParameterSource.DEFAULT"
         )
-        has_custom_seed = (
+        has_custom_seed: bool = (
             str(ctx.get_parameter_source("seed")) != "ParameterSource.DEFAULT"
         )
 
@@ -196,11 +211,17 @@ def main_callback(
 
         raise typer.Exit()
 
+    # Fallback default interaction pattern rendering global help usage diagnostics
     print("KrakenParser by Ilia V. Popov")
     print(ctx.get_help())
 
 
 def entry_point() -> None:
+    """Consolidated main system application executor wrapper.
+
+    Handles external runtime events like manual cancellation securely to protect
+    terminal trace sanity.
+    """
     try:
         app()
     except KeyboardInterrupt:
