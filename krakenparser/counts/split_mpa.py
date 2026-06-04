@@ -1,7 +1,10 @@
-#!/usr/bin/env python
-"""Split a combined MPA table into per-rank TXT files.
+#!/usr/bin/env python3
+"""Decomposition utility to partition master MPA matrices into rank-specific text tables.
 
-Replaces decombine.sh and decombine_viruses.sh.
+This module splits combined multi-sample MetaPhlAn files into separate tables grouped
+by taxonomic rank (species, genus, family, etc.). It supports on-the-fly filtering
+for specific biological domains (e.g., Viruses, Bacteria) and filters out host
+contamination profiles using predefined taxonomic blacklists.
 """
 
 import logging
@@ -14,15 +17,18 @@ import typer
 
 from krakenparser.utils import ensure_output_dir
 
-_log = logging.getLogger(__name__)
+# Initialize module-level isolated logger
+_log: logging.Logger = logging.getLogger(__name__)
 
-app = typer.Typer(
+# Dedicated Typer routing application instantiation
+app: typer.Typer = typer.Typer(
     name="split",
     add_completion=False,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
-_RANKS = [
+# Immutable configuration schema mapping ranks, targets, and descendents to drop
+_RANKS: list[tuple[str, str, list[str]]] = [
     ("species", "s__", []),
     ("genus", "g__", ["s__"]),
     ("family", "f__", ["s__", "g__"]),
@@ -31,7 +37,8 @@ _RANKS = [
     ("phylum", "p__", ["s__", "g__", "f__", "o__", "c__"]),
 ]
 
-_HUMAN_MARKERS = frozenset(
+# Host/human filtering target taxonomy markers
+_HUMAN_MARKERS: frozenset[str] = frozenset(
     [
         "s__Homo_sapiens",
         "g__Homo",
@@ -42,48 +49,88 @@ _HUMAN_MARKERS = frozenset(
     ]
 )
 
-_ACCESSION_RE = re.compile(r"(SRS|SRR|SRX|ERS|ERR|ERX|DRS|DRR|DRX)\d*-")
+# Regular expression matching SRA/ENA run technical accession sub-strings
+_ACCESSION_RE: re.Pattern[str] = re.compile(
+    r"(SRS|SRR|SRX|ERS|ERR|ERX|DRS|DRR|DRX)\d*-"
+)
 
 
 def _strip_path_prefix(line: str) -> str:
-    tab = line.find("\t")
+    """Isolate the terminal taxonomic clade and purge short-read archive prefixes.
+
+    Extracts the right-most node classification component from pipe-separated
+    lineage string paths and trims technical sequencing metadata tags.
+
+    Args:
+        line: Raw tab-separated line from an MPA summary matrix.
+
+    Returns:
+        str: Cleansed and isolated clade metric description row.
+    """
+    tab: int = line.find("\t")
     if tab == -1:
         return line
     path, rest = line[:tab], line[tab:]
-    pipe = path.rfind("|")
-    segment = path[pipe + 1 :] if pipe != -1 else path
+    pipe: int = path.rfind("|")
+    segment: str = path[pipe + 1 :] if pipe != -1 else path
     return _ACCESSION_RE.sub("", segment + rest)
 
 
 def _human_in_line(line: str) -> bool:
-    tab = line.find("\t")
-    path = line[:tab] if tab != -1 else line
-    segments = set(path.split("|"))
+    """Verify if the taxonomic lineage contains human contamination markers.
+
+    Args:
+        line: Raw text line containing structural pipe-separated classifications.
+
+    Returns:
+        bool: True if the lineage intersects with monitored human host constraints.
+    """
+    tab: int = line.find("\t")
+    path: str = line[:tab] if tab != -1 else line
+    segments: set[str] = set(path.split("|"))
     return bool(segments & _HUMAN_MARKERS)
 
 
 def split_mpa(
-    input_file: str,
-    output_dir: str,
+    input_file: Path,
+    output_dir: Path,
     viruses_only: bool = False,
     bacteria_only: bool = False,
     fungi_only: bool = False,
     archaea_only: bool = False,
     keep_human: bool = False,
 ) -> None:
-    in_path = Path(input_file)
-    if not in_path.is_file():
-        raise FileNotFoundError(f"Input file not found: {in_path}")
-    out_path = ensure_output_dir(output_dir, is_file=False)
+    """Deconstruct an MPA layout spreadsheet into separate single-rank count matrices.
+
+    Applies selective biological domain filters, drops non-target sub-clades,
+    performs host background depletion checks, and exports isolated text matrices
+    under an independent 'txt' directory layout structure.
+
+    Args:
+        input_file: Validated Path to the incoming source master MPA file.
+        output_dir: Path locating the destination output root workspace directory.
+        viruses_only: If True, blocks all entries missing 'd__Viruses' tokens.
+        bacteria_only: If True, blocks all entries missing 'd__Bacteria' tokens.
+        fungi_only: If True, blocks all entries missing 'k__Fungi' tokens.
+        archaea_only: If True, blocks all entries missing 'd__Archaea' tokens.
+        keep_human: If True, skips host background depletion steps.
+
+    Raises:
+        FileNotFoundError: Triggered if the targeted raw matrix file cannot be loaded.
+    """
+    if not input_file.is_file():
+        raise FileNotFoundError(f"Input file not found: {input_file}")
+
+    out_path: Path = ensure_output_dir(output_dir, is_file=False)
     (out_path / "txt").mkdir(exist_ok=True)
 
-    all_lines = [
-        ln
-        for ln in in_path.read_text().splitlines()
-        if not ln.startswith("#") and ln.strip()
-    ]
+    # High-performance streaming line extractor skipping comments and layout whitespace
+    with open(input_file, "r", encoding="utf-8") as fh:
+        all_lines: list[str] = [
+            ln for line in fh if (ln := line.strip()) and not ln.startswith("#")
+        ]
 
-    data_lines = all_lines.copy()
+    data_lines: list[str] = all_lines.copy()
     if viruses_only:
         data_lines = [ln for ln in data_lines if "d__Viruses" in ln]
     if bacteria_only:
@@ -93,17 +140,19 @@ def split_mpa(
     if archaea_only:
         data_lines = [ln for ln in data_lines if "d__Archaea" in ln]
 
+    # Re-integrate target host sequences if preservation flags are set
     if keep_human:
-        human_lines = [ln for ln in all_lines if _human_in_line(ln)]
+        human_lines: list[str] = [ln for ln in all_lines if _human_in_line(ln)]
         data_lines = list(dict.fromkeys(data_lines + human_lines))
 
+    # Iteratively evaluate taxons and construct independent files
     for rank_name, rank_prefix, exclude_prefixes in _RANKS:
-        result = []
+        result: list[str] = []
 
         for line in data_lines:
             if rank_prefix not in line:
                 continue
-            if "t__" in line:
+            if "t__" in line:  # Skip raw strain-level markers
                 continue
             if any(ep in line for ep in exclude_prefixes):
                 continue
@@ -111,8 +160,11 @@ def split_mpa(
                 continue
             result.append(_strip_path_prefix(line))
 
-        out_file = out_path / "txt" / f"counts_{rank_name}.txt"
-        out_file.write_text("\n".join(result) + ("\n" if result else ""))
+        out_file: Path = out_path / "txt" / f"counts_{rank_name}.txt"
+
+        # Python 3.10 validation: isolate conditional trailing slashes from f-strings
+        trailing_newline: str = "\n" if result else ""
+        out_file.write_text("\n".join(result) + trailing_newline, encoding="utf-8")
 
     _log.info("MPA file split successfully. Output stored in %s", output_dir)
 
@@ -120,17 +172,17 @@ def split_mpa(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    input_file: Optional[str] = typer.Option(
+    input_file: Optional[Path] = typer.Option(
         None,
         "-i",
         "--input",
         help="Input combined MPA file.",
     ),
-    output_dir: Optional[str] = typer.Option(
+    output_dir: Optional[Path] = typer.Option(
         None,
         "-o",
         "--output",
-        help="Output directory.",
+        help="Output directory root pathway.",
     ),
     viruses_only: bool = typer.Option(
         False,
