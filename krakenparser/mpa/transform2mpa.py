@@ -1,51 +1,64 @@
-#!/usr/bin/env python
-"""Convert a Kraken2 report to MetaPhlAn (MPA) format."""
+#!/usr/bin/env python3
+"""Taxonomic format converter translating Kraken2 reports to MetaPhlAn (MPA) layout.
+
+This module parses standard space-indented hierarchical Kraken2 and KrakenUniq output
+reports, tracks taxonomic depth changes through parent lineage state machines,
+and converts records into pipe-separated '|' multi-level lineage tracks.
+"""
 
 import logging
-import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 
 from krakenparser.utils import ensure_output_dir
 
-_log = logging.getLogger(__name__)
+# Initialize module-level isolated logger
+_log: logging.Logger = logging.getLogger(__name__)
 
-app = typer.Typer(
+# Dedicated Typer routing application instantiation
+app: typer.Typer = typer.Typer(
     name="mpa",
     add_completion=False,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
-_MAIN_LVLS = {"R", "K", "D", "P", "C", "O", "F", "G", "S"}
+# Standard strict taxonomic reference limits
+_MAIN_LVLS: set[str] = {"R", "K", "D", "P", "C", "O", "F", "G", "S"}
 
 
 def _parse_line(line: str, remove_spaces: bool = False) -> list:
-    """Parse one Kraken2 report line.
+    """Parse a single Kraken2 or KrakenUniq report row and extract vital stats.
 
-    Returns [name, level_num, level_type, all_reads, percents]
-    or empty list on malformed input.
+    Handles standard kraken formats alongside KrakenUniq outputs by mapping text
+    labels to fixed-width single-character taxonomic rank designators.
+
+    Args:
+        line: A raw tab-delimited line from the report file.
+        remove_spaces: If True, internal spaces within organism nomenclature
+            strings are mapped securely to structural underscores.
+
+    Returns:
+        list: A data list containing [cleaned_name, level_num, level_type, total_reads, relative_percentage]
+            or an empty list [] if the line format violates parser syntactic assumptions.
     """
-    parts = line.rstrip("\n").split("\t")
+    parts: list[str] = line.rstrip("\n").split("\t")
     if len(parts) < 4:
         return []
+
     try:
-        int(parts[1])
+        percents: float = float(parts[0])
+        all_reads: int = int(parts[1])
     except ValueError:
         return []
 
-    try:
-        percents = float(parts[0])
-    except ValueError:
-        return []
-    all_reads = int(parts[1])
-
+    # Detect and handle alternative KrakenUniq columns format if applicable
     try:
         int(parts[-3])
-        level_type = parts[-2].strip()
-        map_kuniq = {
+        level_type: str = parts[-2].strip()
+        map_kuniq: dict[str, str] = {
             "species": "S",
             "genus": "G",
             "family": "F",
@@ -55,25 +68,20 @@ def _parse_line(line: str, remove_spaces: bool = False) -> list:
             "superkingdom": "D",
             "kingdom": "K",
         }
-        if level_type not in map_kuniq:
-            level_type = "-"
-        else:
-            level_type = map_kuniq[level_type]
+        level_type = map_kuniq.get(level_type, "-")
     except ValueError:
         level_type = parts[-3].strip()
 
-    name = parts[-1]
-    spaces = 0
-    for ch in name:
-        if ch == " ":
-            spaces += 1
-        else:
-            break
-    name = name.strip()
+    raw_name: str = parts[-1]
+
+    # High-performance calculation of leading double-space indentation metrics
+    spaces: int = len(raw_name) - len(raw_name.lstrip(" "))
+    name: str = raw_name.strip()
+
     if remove_spaces:
         name = name.replace(" ", "_")
 
-    level_num = spaces / 2
+    level_num: float = spaces / 2
     return [name, level_num, level_type, all_reads, percents]
 
 
@@ -85,28 +93,49 @@ def kreport_to_mpa(
     use_reads: bool = True,
     remove_spaces: bool = True,
 ) -> None:
-    """Convert a single Kraken2 report to MPA format."""
+    """Transform an individual Kraken2 report matrix file into an MPA lineage table.
+
+    Iterates over lines sequentially, dynamically collapsing or expanding an internal
+    lineage stack buffer when tracking changes in indentation depths.
+
+    Args:
+        report_path: Path to the validated incoming raw text file.
+        output_path: Path where the converted tracking table will be dumped.
+        display_header: If True, writes a header indicating source provenance metadata.
+        include_intermediate: If True, non-standard ranks are preserved under 'x__' tags.
+        use_reads: If True, maps absolute counts. If False, streams relative percentage scores.
+        remove_spaces: If True, replaces standard word spaces inside strings with underscores.
+
+    Raises:
+        FileNotFoundError: Triggered if the target source input file is not found.
+    """
     if not report_path.is_file():
         raise FileNotFoundError(f"Input file not found: {report_path}")
-    out_path = ensure_output_dir(str(output_path), is_file=True)
+
+    out_path: Path = ensure_output_dir(output_path, is_file=True)
 
     curr_path: list[str] = []
-    prev_lvl_num = -1
+    prev_lvl_num: float = -1.0
 
-    with open(report_path) as r_fh, open(out_path, "w") as o_fh:
+    with (
+        open(report_path, encoding="utf-8") as r_fh,
+        open(out_path, "w", encoding="utf-8") as o_fh,
+    ):
         if display_header:
-            o_fh.write("#Classification\t" + os.path.basename(report_path) + "\n")
+            o_fh.write(f"#Classification\t{report_path.name}\n")
 
         for line in r_fh:
             report_vals = _parse_line(line, remove_spaces)
-            if len(report_vals) < 5:
+            if report_vals is None:
                 continue
 
             name, level_num, level_type, all_reads, percents = report_vals
 
+            # Safely drop unclassified sequencing categories ('U')
             if level_type == "U":
                 continue
 
+            # Standardize non-canonical levels to match MetaPhlAn structural styles
             if level_type not in _MAIN_LVLS:
                 level_type = "x"
             elif level_type == "K":
@@ -114,26 +143,29 @@ def kreport_to_mpa(
             elif level_type == "D":
                 level_type = "d"
 
-            level_str = level_type.lower() + "__" + name
+            level_str: str = f"{level_type.lower()}__{name}"
 
-            if prev_lvl_num == -1:
+            # Setup baseline root node conditions
+            if prev_lvl_num == -1.0:
                 prev_lvl_num = level_num
                 curr_path.append(level_str)
                 continue
 
-            while level_num != (prev_lvl_num + 1):
-                prev_lvl_num -= 1
+            # Step out of current lineage stack frames if depth levels step backward
+            while level_num != (prev_lvl_num + 1.0):
+                prev_lvl_num -= 1.0
                 curr_path.pop()
 
+            # Conditionally pipe clean taxonomy paths down to file IO streams
             if (level_type == "x" and include_intermediate) or level_type != "x":
-                ancestors = [
+                ancestors: list[str] = [
                     seg
                     for seg in curr_path
                     if (seg[0] != "x" or include_intermediate) and seg[0] != "r"
                 ]
-                path = "|".join(ancestors + [level_str])
-                value = str(all_reads) if use_reads else str(percents)
-                o_fh.write(path + "\t" + value + "\n")
+                path: str = "|".join(ancestors + [level_str])
+                value: str = str(all_reads) if use_reads else str(percents)
+                o_fh.write(f"{path}\t{value}\n")
 
             curr_path.append(level_str)
             prev_lvl_num = level_num
@@ -207,10 +239,10 @@ def main(
         )
         raise typer.Exit(code=1)
 
-    use_reads = not percentages
-    remove_spaces = not keep_spaces
+    use_reads: bool = not percentages
+    remove_spaces: bool = not keep_spaces
 
-    kwargs = dict(
+    kwargs: dict[str, Any] = dict(
         display_header=display_header,
         include_intermediate=intermediate_ranks,
         use_reads=use_reads,
@@ -227,10 +259,13 @@ def main(
             for f in sorted(input_dir.iterdir()):
                 if not f.is_file():
                     continue
-                out_name = f.name.replace(".kreport", ".MPA.TXT")
+                out_name: str = f.name.replace(".kreport", ".MPA.TXT")
                 kreport_to_mpa(f, o_file / out_name, **kwargs)
             _log.info("Converted to MPA successfully. Output stored in %s", o_file)
         else:
+            assert r_file is not None, (
+                "Internal error: r_file is missing in singleton mode."
+            )
             kreport_to_mpa(r_file, o_file, **kwargs)
 
     except FileNotFoundError as e:
