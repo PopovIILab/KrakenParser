@@ -58,11 +58,8 @@ def _is_processable(filepath: Path) -> bool:
     except Exception:
         return False
 
-    # 3. СТРОГАЯ проверка на UTF-8 (вот здесь косяк)
     try:
-        # Добавляем errors="strict", чтобы не глотать BOM и левые кодировки
         with open(filepath, "r", encoding="utf-8", errors="strict") as f:
-            # Читаем небольшой кусок файла для проверки
             f.read(1024)
         return True
     except UnicodeDecodeError:
