@@ -8,7 +8,7 @@ version = "1.1.2"
 description = "A collection of scripts designed to process Kraken2 reports and convert them into CSV format."
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
-authors = [{ name = "Ilia Popov", email = "iljapopov17@gmail.com" }]
+authors = [{ name = "Ilya (Ilia) Popov", email = "ilypopv@gmail.com" }]
 requires-python = ">=3.10,<=3.16"
 dependencies = [
     "pandas>=2.0.0,<=2.3.3",
