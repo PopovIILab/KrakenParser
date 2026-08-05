@@ -8,7 +8,7 @@ transposed CSV sheets conforming to the tidy data format (samples as rows).
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import pandas as pd
 import typer
@@ -57,18 +57,22 @@ def convert_to_csv(input_file: Path, output_file: Path) -> None:
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    input_file: Optional[Path] = typer.Option(
-        None,
-        "-i",
-        "--input",
-        help="Path to the input tab-delimited TXT file (samples in columns, taxa in rows).",
-    ),
-    output_file: Optional[Path] = typer.Option(
-        None,
-        "-o",
-        "--output",
-        help="Path to the output transposed CSV file.",
-    ),
+    input_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-i",
+            "--input",
+            help="Path to the input tab-delimited TXT file (samples in columns, taxa in rows).",
+        ),
+    ] = None,
+    output_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-o",
+            "--output",
+            help="Path to the output transposed CSV file.",
+        ),
+    ] = None,
 ) -> None:
     """Reads a TXT file, reorganizes the data, and converts it into a CSV file."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
