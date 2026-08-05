@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Normalization module for calculating relative abundances of microbial taxa.
 
 This module reshapes wide count matrices into tidy long-format tables, converts
@@ -11,7 +10,7 @@ import logging
 import sys
 import warnings
 from pathlib import Path
-from typing import Any, Optional
+from typing import Annotated, Any
 
 import numpy as np
 import pandas as pd
@@ -31,7 +30,7 @@ app: typer.Typer = typer.Typer(
 
 
 def calculate_rel_abund(
-    input_file: Path, output_file: Path, other_threshold: Optional[float] = None
+    input_file: Path, output_file: Path, other_threshold: float | None = None
 ) -> None:
     """Transform absolute taxonomic counts to relative percentage profiles.
 
@@ -106,24 +105,30 @@ def calculate_rel_abund(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    input_file: Optional[Path] = typer.Option(
-        None,
-        "-i",
-        "--input",
-        help="Input CSV file with counts.",
-    ),
-    output_file: Optional[Path] = typer.Option(
-        None,
-        "-o",
-        "--output",
-        help="Output CSV file path.",
-    ),
-    other: Optional[float] = typer.Option(
-        None,
-        "-O",
-        "--other",
-        help="Threshold for grouping taxa into 'Other (<X%)'. Example: -O 3.5",
-    ),
+    input_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-i",
+            "--input",
+            help="Input CSV file with counts.",
+        ),
+    ] = None,
+    output_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-o",
+            "--output",
+            help="Output CSV file path.",
+        ),
+    ] = None,
+    other: Annotated[
+        float | None,
+        typer.Option(
+            "-O",
+            "--other",
+            help="Threshold for grouping taxa into 'Other (<X%)'. Example: -O 3.5",
+        ),
+    ] = None,
 ) -> None:
     """Calculates taxa relative abundance and saves it to a CSV file."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
