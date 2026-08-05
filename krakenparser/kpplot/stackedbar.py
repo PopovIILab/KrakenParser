@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Stacked barplot visualization module for compositional metagenomic profiles.
 
 This module builds normalized, multi-component stacked column charts tracking
@@ -6,7 +5,8 @@ relative taxonomic abundance variations across independent sample coordinates
 or aggregated experimental cohorts.
 """
 
-from typing import Literal, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,15 +31,15 @@ class KpStackedBarplot(KpPlotBase):
 
 def stacked_barplot(
     df: pd.DataFrame,
-    metadata: Optional[pd.DataFrame] = None,
-    metadata_group: Optional[str] = None,
-    sample_order: Optional[Sequence[str]] = None,
-    figsize: Tuple[float, float] = (14.0, 7.0),
-    cmap: Union[str, Sequence[str]] = "tab20",
+    metadata: pd.DataFrame | None = None,
+    metadata_group: str | None = None,
+    sample_order: Sequence[str] | None = None,
+    figsize: tuple[float, float] = (14.0, 7.0),
+    cmap: str | Sequence[str] = "tab20",
     bar_width: float = 0.6,
     edgecolor: str = "black",
     edge_linewidth: float = 0.3,
-    title: Optional[str] = None,
+    title: str | None = None,
     title_fontsize: float = 16.0,
     title_color: str = "black",
     title_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
@@ -60,7 +60,7 @@ def stacked_barplot(
     xticks_color: str = "black",
     xticks_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
     xticks_style: Literal["normal", "italic", "oblique"] = "normal",
-    background_color: Optional[str] = "white",
+    background_color: str | None = "white",
     grid: bool = True,
     grid_linestyle: str = "--",
     grid_alpha: float = 0.7,
@@ -68,7 +68,7 @@ def stacked_barplot(
     legend_fontsize: float = 9.0,
     legend_fontstyle: Literal["normal", "italic", "oblique"] = "italic",
     legend_loc: str = "upper left",
-    legend_bbox: Tuple[float, float] = (1.05, 1.0),
+    legend_bbox: tuple[float, float] = (1.05, 1.0),
     show_legend: bool = True,
 ) -> KpStackedBarplot:
     """Generate a publication-grade customizable stacked barplot for relative abundances.
@@ -154,7 +154,7 @@ def stacked_barplot(
     # Step 5: Establish palette map dictionaries compliant with static analysis
     if isinstance(cmap, str):
         palette_colors = sns.color_palette(cmap, n_colors=len(df_plot.columns))
-        color_dict: dict[str, Union[str, tuple[float, ...]]] = {
+        color_dict: dict[str, str | tuple[float, ...]] = {
             str(col): color for col, color in zip(df_plot.columns, palette_colors)
         }
     elif isinstance(cmap, (list, tuple, np.ndarray, pd.Series)) or hasattr(
