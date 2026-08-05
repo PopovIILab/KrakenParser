@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Taxonomic format converter translating Kraken2 reports to MetaPhlAn (MPA) layout.
 
 This module parses standard space-indented hierarchical Kraken2 and KrakenUniq output
@@ -9,7 +8,7 @@ and converts records into pipe-separated '|' multi-level lineage tracks.
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Annotated, Any
 
 import typer
 
@@ -174,25 +173,31 @@ def kreport_to_mpa(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    r_file: Optional[Path] = typer.Option(
-        None,
-        "-r",
-        "--report-file",
-        "--report",
-        help="Single input Kraken2 report file.",
-    ),
-    input_dir: Optional[Path] = typer.Option(
-        None,
-        "-i",
-        "--input",
-        help="Input directory containing Kraken2 report files (batch mode).",
-    ),
-    o_file: Optional[Path] = typer.Option(
-        None,
-        "-o",
-        "--output",
-        help="Output MPA file (single mode) or output directory (batch mode).",
-    ),
+    r_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-r",
+            "--report-file",
+            "--report",
+            help="Single input Kraken2 report file.",
+        ),
+    ] = None,
+    input_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "-i",
+            "--input",
+            help="Input directory containing Kraken2 report files (batch mode).",
+        ),
+    ] = None,
+    o_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-o",
+            "--output",
+            help="Output MPA file (single mode) or output directory (batch mode).",
+        ),
+    ] = None,
     display_header: bool = typer.Option(
         False,
         "--display-header",
@@ -242,12 +247,12 @@ def main(
     use_reads: bool = not percentages
     remove_spaces: bool = not keep_spaces
 
-    kwargs: dict[str, Any] = dict(
-        display_header=display_header,
-        include_intermediate=intermediate_ranks,
-        use_reads=use_reads,
-        remove_spaces=remove_spaces,
-    )
+    kwargs: dict[str, Any] = {
+        "display_header": display_header,
+        "include_intermediate": intermediate_ranks,
+        "use_reads": use_reads,
+        "remove_spaces": remove_spaces,
+    }
 
     try:
         if input_dir:
