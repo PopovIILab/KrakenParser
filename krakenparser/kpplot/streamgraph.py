@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Streamgraph visualization module for continuous-like metagenomic cohort profiles.
 
 This module renders smooth, contiguous stacked area charts representing
@@ -6,7 +5,8 @@ the progression and shifts of relative taxonomic abundances across samples
 or grouped metadata categories.
 """
 
-from typing import Any, Literal, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,16 +31,16 @@ class KpStreamgraph(KpPlotBase):
 
 def streamgraph(
     df: pd.DataFrame,
-    metadata: Optional[pd.DataFrame] = None,
-    metadata_group: Optional[str] = None,
-    sample_order: Optional[Sequence[str]] = None,
-    figsize: Tuple[float, float] = (14.0, 7.0),
-    cmap: Union[str, Sequence[str]] = "tab20",
+    metadata: pd.DataFrame | None = None,
+    metadata_group: str | None = None,
+    sample_order: Sequence[str] | None = None,
+    figsize: tuple[float, float] = (14.0, 7.0),
+    cmap: str | Sequence[str] = "tab20",
     bar_width: float = 0.6,
     fill_alpha: float = 1.0,
-    edgecolor: Optional[str] = None,
+    edgecolor: str | None = None,
     edge_linewidth: float = 0.3,
-    title: Optional[str] = None,
+    title: str | None = None,
     title_fontsize: float = 16.0,
     title_color: str = "black",
     title_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
@@ -61,7 +61,7 @@ def streamgraph(
     xticks_color: str = "black",
     xticks_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
     xticks_style: Literal["normal", "italic", "oblique"] = "normal",
-    background_color: Optional[str] = "white",
+    background_color: str | None = "white",
     grid: bool = True,
     grid_linestyle: str = "--",
     grid_alpha: float = 0.7,
@@ -69,7 +69,7 @@ def streamgraph(
     legend_fontsize: float = 9.0,
     legend_fontstyle: Literal["normal", "italic", "oblique"] = "italic",
     legend_loc: str = "upper left",
-    legend_bbox: Tuple[float, float] = (1.05, 1.0),
+    legend_bbox: tuple[float, float] = (1.05, 1.0),
     show_legend: bool = True,
 ) -> KpStreamgraph:
     """Generate a highly customizable streamgraph/stacked-area plot for relative abundances.
