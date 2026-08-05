@@ -39,6 +39,7 @@ filterwarnings = [
     "ignore:Tight layout not applied.*:UserWarning",
     "ignore:Samples with zero total abundance.*:UserWarning",
 ]
+pythonpath = ["."]
 
 [tool.coverage.run]
 source = ["krakenparser"]
