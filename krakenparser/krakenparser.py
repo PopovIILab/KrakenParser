@@ -11,7 +11,7 @@ import sys
 from importlib.metadata import PackageNotFoundError as _PNF
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import typer
 
@@ -65,12 +65,16 @@ def _version_callback(value: bool) -> None:
 @app.callback(invoke_without_command=True)
 def main_callback(
     ctx: typer.Context,
-    input_dir: Optional[Path] = typer.Option(
-        None, "-i", "--input", help="Directory containing Kraken2 report files."
-    ),
-    output_dir: Optional[Path] = typer.Option(
-        None, "-o", "--output", help="Output directory."
-    ),
+    input_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "-i", "--input", help="Directory containing Kraken2 report files."
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path | None,
+        typer.Option("-o", "--output", help="Output directory."),
+    ] = None,
     viruses: bool = typer.Option(
         False,
         "-viruses",
@@ -98,7 +102,7 @@ def main_callback(
     keep_human: bool = typer.Option(
         False, "-keep-human", "--keep-human", help="Do not filter human-related taxa."
     ),
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "-V",
         "--version",
@@ -109,7 +113,7 @@ def main_callback(
     depth: int = typer.Option(
         1000, "-d", "--depth", help="Rarefaction depth for β-diversity."
     ),
-    seed: Optional[int] = typer.Option(
+    seed: int | None = typer.Option(
         None, "-s", "--seed", help="Random seed for reproducible rarefaction."
     ),
     overwrite: bool = typer.Option(
