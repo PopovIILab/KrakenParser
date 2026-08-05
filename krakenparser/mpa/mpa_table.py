@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Aggregation engine for merging multiple MetaPhlAn (MPA) files into a unified matrix.
 
 This module parses multi-sample taxonomic report files formatted in the MetaPhlAn
@@ -10,7 +9,7 @@ structurally ordered, tab-delimited master count matrix.
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import typer
 
@@ -132,18 +131,22 @@ def combine_mpa(in_files: list[Path], o_file: Path) -> None:
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    in_files: Optional[list[Path]] = typer.Option(
-        None,
-        "-i",
-        "--input",
-        help="Input MPA files (one per sample). Repeat the '-i' option for multiple files.",
-    ),
-    o_file: Optional[Path] = typer.Option(
-        None,
-        "-o",
-        "--output",
-        help="Output merged MPA file path.",
-    ),
+    in_files: Annotated[
+        list[Path] | None,
+        typer.Option(
+            "-i",
+            "--input",
+            help="Input MPA files (one per sample). Repeat the '-i' option for multiple files.",
+        ),
+    ] = None,
+    o_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-o",
+            "--output",
+            help="Output merged MPA file path.",
+        ),
+    ] = None,
 ) -> None:
     """Combine MPA files into a single tab-delimited table."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
