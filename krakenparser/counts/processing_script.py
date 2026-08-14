@@ -12,7 +12,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import typer
 
@@ -106,18 +106,22 @@ def process_files(source_file: Path, destination_file: Path) -> None:
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    input_file: Optional[Path] = typer.Option(
-        None,
-        "-i",
-        "--input",
-        help="Path to the source file (used to extract and truncate header labels).",
-    ),
-    output_file: Optional[Path] = typer.Option(
-        None,
-        "-o",
-        "--output",
-        help="Path to the destination matrix undergoing taxonomic name sanitation.",
-    ),
+    input_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-i",
+            "--input",
+            help="Path to the source file (used to extract and truncate header labels).",
+        ),
+    ] = None,
+    output_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-o",
+            "--output",
+            help="Path to the destination matrix undergoing taxonomic name sanitation.",
+        ),
+    ] = None,
 ) -> None:
     """Reads a source file, processes its first line, modifies taxa names in a destination file, and updates it."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")

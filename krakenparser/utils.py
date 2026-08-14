@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Shared utility wrappers and filesystem helpers for the KrakenParser suite.
 
 This module provides low-level infrastructure operations, such as safe path

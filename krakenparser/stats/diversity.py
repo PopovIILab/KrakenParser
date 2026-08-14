@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Statistical module for calculating microbial community alpha and beta diversities.
 
 This module provides industry-standard ecological metrics including Shannon Index,
@@ -8,8 +7,9 @@ Bray-Curtis and Jaccard distance metrics for beta diversity analysis.
 
 import logging
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Annotated, Any
 
 import numpy as np
 import pandas as pd
@@ -150,7 +150,7 @@ def calc_beta_div(
     df: pd.DataFrame,
     output_path: Path,
     rarefaction_depth: int,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> None:
     """Compute composition dissimilarity matrices utilizing uniform rarefied values.
 
@@ -210,25 +210,29 @@ def calc_beta_div(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    input_file: Optional[Path] = typer.Option(
-        None,
-        "-i",
-        "--input",
-        help="Input total count table CSV (species level).",
-    ),
-    output_dir: Optional[Path] = typer.Option(
-        None,
-        "-o",
-        "--output",
-        help="Output directory path.",
-    ),
+    input_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-i",
+            "--input",
+            help="Input total count table CSV (species level).",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "-o",
+            "--output",
+            help="Output directory path.",
+        ),
+    ] = None,
     depth: int = typer.Option(
         1000,
         "-d",
         "--depth",
         help="Rarefaction depth for β diversity.",
     ),
-    seed: Optional[int] = typer.Option(
+    seed: int | None = typer.Option(
         None,
         "-s",
         "--seed",

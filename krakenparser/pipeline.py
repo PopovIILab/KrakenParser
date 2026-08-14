@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Core orchestration engine for the KrakenParser execution pipeline.
 
 This module consolidates independent taxonomic processing steps into a seamless,
@@ -10,7 +9,7 @@ import logging
 import shutil
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import pandas as pd
 import typer
@@ -55,29 +54,27 @@ def _is_processable(filepath: Path) -> bool:
     try:
         if b"\x00" in filepath.read_bytes():
             return False
-    except Exception:
+    except OSError:
         return False
 
     try:
         with open(filepath, "r", encoding="utf-8", errors="strict") as f:
             f.read(1024)
         return True
-    except UnicodeDecodeError:
-        return False
-    except Exception:
+    except (UnicodeDecodeError, OSError):
         return False
 
 
 def run_pipeline(
     input_dir: Path,
-    output_dir: Optional[Path] = None,
+    output_dir: Path | None = None,
     keep_human: bool = False,
     viruses_only: bool = False,
     bacteria_only: bool = False,
     fungi_only: bool = False,
     archaea_only: bool = False,
     rarefaction_depth: int = 1000,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     overwrite: bool = False,
 ) -> None:
     """Execute the sequential programmatic workflow blocks of KrakenParser.
@@ -204,18 +201,22 @@ def run_pipeline(
     no_args_is_help=True,
 )
 def main(
-    input_dir: Path = typer.Option(
-        ...,
-        "-i",
-        "--input",
-        help="Directory containing Kraken2 report files.",
-    ),
-    output_dir: Optional[Path] = typer.Option(
-        None,
-        "-o",
-        "--output",
-        help="Output directory (default: parent of input).",
-    ),
+    input_dir: Annotated[
+        Path,
+        typer.Option(
+            "-i",
+            "--input",
+            help="Directory containing Kraken2 report files.",
+        ),
+    ],
+    output_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "-o",
+            "--output",
+            help="Output directory (default: parent of input).",
+        ),
+    ] = None,
     keep_human: bool = typer.Option(
         False,
         "--keep-human",
@@ -247,7 +248,7 @@ def main(
         "--depth",
         help="Rarefaction depth for β-diversity.",
     ),
-    seed: Optional[int] = typer.Option(
+    seed: int | None = typer.Option(
         None,
         "-s",
         "--seed",

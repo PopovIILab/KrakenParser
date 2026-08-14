@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Hierarchical clustering and heatmap visualization module for metagenomic profiles.
 
 This module leverages Seaborn's ClusterGrid matrix engine to compute and render
@@ -6,7 +5,8 @@ dendrogram-driven abundance clusterings, enabling rapid detection of co-occurren
 taxonomic patterns and sample cohort similarities.
 """
 
-from typing import Literal, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -33,22 +33,22 @@ class KpClustermap(KpPlotBase):
 
 def clustermap(
     df: pd.DataFrame,
-    metadata: Optional[pd.DataFrame] = None,
-    metadata_group: Optional[str] = None,
-    sample_order: Optional[Sequence[str]] = None,
+    metadata: pd.DataFrame | None = None,
+    metadata_group: str | None = None,
+    sample_order: Sequence[str] | None = None,
     clust_linewidths: float = 0.5,
     clust_linecolor: str = "grey",
     x_axis: str = "Sample_id",
     y_axis: str = "taxon",
-    figsize: Optional[Tuple[float, float]] = None,
+    figsize: tuple[float, float] | None = None,
     cmap: str = "Greens",
-    title: Optional[str] = None,
+    title: str | None = None,
     title_fontsize: float = 16.0,
     title_color: str = "black",
     title_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
     title_style: Literal["normal", "italic", "oblique"] = "normal",
-    xlabel: Optional[str] = None,
-    ylabel: Optional[str] = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
     xlabel_fontsize: float = 12.0,
     ylabel_fontsize: float = 12.0,
     xlabel_color: str = "black",
@@ -69,11 +69,11 @@ def clustermap(
     yticks_color: str = "black",
     yticks_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
     yticks_style: Literal["normal", "italic", "oblique"] = "normal",
-    standard_scale: Optional[int] = None,
-    z_score: Optional[int] = None,
+    standard_scale: int | None = None,
+    z_score: int | None = None,
     legend_title: str = "Relative abundance (%)",
-    cbar_pos: Tuple[float, float, float, float] = (1.02, 0.3, 0.03, 0.4),
-    background_color: Optional[str] = "white",
+    cbar_pos: tuple[float, float, float, float] = (1.02, 0.3, 0.03, 0.4),
+    background_color: str | None = "white",
 ) -> KpClustermap:
     """Generate a highly customizable, publication-grade hierarchical clustermap.
 

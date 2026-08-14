@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Base classes and data aggregation utilities for metagenomic visualization.
 
 This module provides structural baselines for managing Matplotlib canvas states
@@ -7,7 +6,6 @@ with cohort metadata schemas and performing group-level re-normalization.
 """
 
 from pathlib import Path
-from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -37,10 +35,10 @@ class KpPlotBase:
 
     def savefig(
         self,
-        path: Union[Path, str],
+        path: Path | str,
         dpi: int = 300,
         transparent: bool = False,
-        bbox_inches: Optional[str] = "tight",
+        bbox_inches: str | None = "tight",
     ) -> None:
         """Commit the current canvas state atomically to a physical image file.
 

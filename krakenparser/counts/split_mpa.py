@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Decomposition utility to partition master MPA matrices into rank-specific text tables.
 
 This module splits combined multi-sample MetaPhlAn files into separate tables grouped
@@ -11,7 +10,7 @@ import logging
 import re
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import typer
 
@@ -172,18 +171,22 @@ def split_mpa(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    input_file: Optional[Path] = typer.Option(
-        None,
-        "-i",
-        "--input",
-        help="Input combined MPA file.",
-    ),
-    output_dir: Optional[Path] = typer.Option(
-        None,
-        "-o",
-        "--output",
-        help="Output directory root pathway.",
-    ),
+    input_file: Annotated[
+        Path | None,
+        typer.Option(
+            "-i",
+            "--input",
+            help="Input combined MPA file.",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "-o",
+            "--output",
+            help="Output directory root pathway.",
+        ),
+    ] = None,
     viruses_only: bool = typer.Option(
         False,
         "--viruses",

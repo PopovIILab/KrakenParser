@@ -34,7 +34,7 @@ def test_parse_line_standard_rank():
 
 def test_parse_line_root_has_zero_depth():
     line = "99.98\t999980\t0\tR\t1\troot\n"
-    name, depth, rank, cum_reads, pct = _parse_line(line)
+    name, depth, rank, _cum_reads, _pct = _parse_line(line)
 
     assert name == "root"
     assert depth == 0
