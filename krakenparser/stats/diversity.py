@@ -142,7 +142,8 @@ def calc_alpha_div(df: pd.DataFrame, output_path: Path) -> None:
     alpha_df.to_csv(out_path / "alpha_div.csv")
 
     _log.info(
-        "α-diversity has been successfully calculated and saved to '%s'.", output_path
+        "Alpha-diversity has been successfully calculated and saved to '%s'.",
+        output_path,
     )
 
 
@@ -203,7 +204,8 @@ def calc_beta_div(
     jaccard_df.to_csv(out_path / "beta_div_jaccard.csv")
 
     _log.info(
-        "β-diversity has been successfully calculated and saved to '%s'.", output_path
+        "Beta-diversity has been successfully calculated and saved to '%s'.",
+        output_path,
     )
 
 
@@ -230,7 +232,7 @@ def main(
         1000,
         "-d",
         "--depth",
-        help="Rarefaction depth for β diversity.",
+        help="Rarefaction depth for beta diversity.",
     ),
     seed: int | None = typer.Option(
         None,
@@ -239,7 +241,7 @@ def main(
         help="Random seed for reproducible rarefaction (default: random).",
     ),
 ) -> None:
-    """Calculate α & β-diversities for microbial communities."""
+    """Calculate alpha & beta-diversities for microbial communities."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     if input_file is None and output_dir is None:
