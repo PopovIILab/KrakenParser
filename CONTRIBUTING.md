@@ -5,6 +5,29 @@ email, or any other method with the owners of this repository before making a ch
 
 Please note we have a code of conduct, please follow it in all your interactions with the project.
 
+See [SUPPORT.md](SUPPORT.md) for where to ask questions, report bugs, or request features.
+
+## Development Setup
+
+```bash
+git clone https://github.com/PopovIILab/KrakenParser.git
+cd KrakenParser
+pip install -e ".[dev]"
+```
+
+## Running the Test Suite
+
+```bash
+pytest
+```
+
+Run a single test file or a keyword-matched subset with:
+
+```bash
+pytest tests/test_units.py
+pytest -k relabund
+```
+
 ## Pull Request Process
 
 1. Ensure any install or build dependencies are removed before the end of the layer when doing a 
