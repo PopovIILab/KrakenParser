@@ -61,6 +61,26 @@ def kreport_file(tmp_path):
     return f
 
 
+# Bracken re-estimates abundances but writes the result in the same 6-column
+# kraken-style report format (via bracken's `-r`/kreport output), so KrakenParser
+# consumes it through the identical Kraken2 report parsing path.
+SAMPLE_BRACKEN_KREPORT = (
+    "100.00\t720000\t0\tR\t1\troot\n"
+    "100.00\t720000\t0\tD\t2\t  Bacteria\n"
+    "100.00\t720000\t0\tP\t1224\t    Pseudomonadota\n"
+    "69.44\t500000\t500000\tS\t287\t      Pseudomonas aeruginosa\n"
+    "30.56\t220000\t220000\tS\t562\t      Escherichia coli\n"
+)
+
+
+@pytest.fixture
+def bracken_kreport_file(tmp_path):
+    """A Bracken-recalibrated report, structurally identical to a Kraken2 kreport."""
+    f = tmp_path / "sample.breport"
+    f.write_text(SAMPLE_BRACKEN_KREPORT)
+    return f
+
+
 @pytest.fixture
 def counts_txt_file(tmp_path):
     """Tab-delimited counts file as produced by processing_script.py."""
@@ -106,6 +126,17 @@ def relabund_df():
             ],
             "rel_abund_perc": [70.0, 20.0, 10.0, 50.0, 35.0, 15.0],
         }
+    )
+
+
+@pytest.fixture
+def beta_div_reference_df():
+    """Two samples with equal total counts (10 each) so rarefaction to depth=10 is a
+    deterministic identity permutation regardless of seed — enabling hand-computed
+    Bray-Curtis/Jaccard reference values."""
+    return pd.DataFrame(
+        {"Taxon_A": [8, 3], "Taxon_B": [2, 3], "Taxon_C": [0, 4]},
+        index=pd.Index(["S1", "S2"], name="Sample_id"),
     )
 
 
