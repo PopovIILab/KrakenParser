@@ -125,6 +125,19 @@ def test_kreport_to_mpa_missing_input_raises(tmp_path):
         kreport_to_mpa(tmp_path / "ghost.kreport", tmp_path / "out.MPA.TXT")
 
 
+def test_kreport_to_mpa_parses_bracken_report(bracken_kreport_file, tmp_path):
+    """Bracken emits the same 6-column kraken-style report as Kraken2, so it must
+    parse through the identical code path with no special-casing."""
+    out = tmp_path / "out.MPA.TXT"
+    kreport_to_mpa(bracken_kreport_file, out)
+    paths = [ln.split("\t")[0] for ln in out.read_text().splitlines()]
+
+    assert any("s__Pseudomonas_aeruginosa" in p for p in paths)
+    assert any("s__Escherichia_coli" in p for p in paths)
+    assert any(p.startswith("d__Bacteria|") for p in paths)
+    assert "root" not in out.read_text()
+
+
 # ===========================================================================
 # convert_to_csv
 # ===========================================================================
@@ -265,6 +278,24 @@ def test_relabund_missing_input_raises(tmp_path):
         calculate_rel_abund(tmp_path / "ghost.csv", tmp_path / "out.csv")
 
 
+def test_relabund_reference_values(counts_csv_file, tmp_path):
+    """Hand-computed percentages for the counts_csv_file fixture.
+
+    S1: 300000 / 200000 / 100000 (total 600000) -> 50.0 / 33.3333... / 16.6666...
+    S2: 100000 / 50000 / 200000 (total 350000) -> 28.5714... / 14.2857... / 57.1428...
+    """
+    out = tmp_path / "ra.csv"
+    calculate_rel_abund(counts_csv_file, out)
+    df = pd.read_csv(out).set_index(["Sample_id", "taxon"])["rel_abund_perc"]
+
+    assert df[("S1", "Pseudomonas aeruginosa")] == pytest.approx(50.0)
+    assert df[("S1", "Escherichia coli")] == pytest.approx(100 / 3)
+    assert df[("S1", "Bacteroides fragilis")] == pytest.approx(100 / 6)
+    assert df[("S2", "Pseudomonas aeruginosa")] == pytest.approx(200 / 7)
+    assert df[("S2", "Escherichia coli")] == pytest.approx(100 / 7)
+    assert df[("S2", "Bacteroides fragilis")] == pytest.approx(400 / 7)
+
+
 # ===========================================================================
 # calc_alpha_div
 # ===========================================================================
@@ -345,6 +376,26 @@ def test_beta_div_diagonal_is_zero(counts_csv_file, tmp_path):
     assert np.allclose(np.diag(bray.values), 0.0)
 
 
+def test_beta_div_reference_values(beta_div_reference_df, tmp_path):
+    """Hand-computed Bray-Curtis/Jaccard distances for beta_div_reference_df.
+
+    Rarefaction depth (10) equals both samples' totals, so subsampling is a
+    deterministic identity permutation and the result is independent of the seed:
+        S1 = [8, 2, 0], S2 = [3, 3, 4]
+        Bray-Curtis = sum(|u-v|) / sum(u+v) = (5+1+4) / (11+5+4) = 10/20 = 0.5
+        Jaccard     = mismatches / (positions with >=1 nonzero) = 1/3
+    """
+    out_dir = tmp_path / "diversity"
+    out_dir.mkdir()
+    calc_beta_div(beta_div_reference_df, out_dir, rarefaction_depth=10, seed=0)
+
+    bray = pd.read_csv(out_dir / "beta_div_bray.csv", index_col=0)
+    jaccard = pd.read_csv(out_dir / "beta_div_jaccard.csv", index_col=0)
+
+    assert bray.loc["S1", "S2"] == pytest.approx(0.5)
+    assert jaccard.loc["S1", "S2"] == pytest.approx(1 / 3)
+
+
 def test_beta_div_too_few_samples_raises(tmp_path):
     df = pd.DataFrame({"Taxon_A": [100], "Taxon_B": [200]}, index=["S1"])  # ty:ignore[invalid-argument-type]
     out_dir = tmp_path / "diversity"
@@ -411,6 +462,19 @@ def test_split_mpa_strips_pipe_path_prefix(combined_mpa_file, tmp_path):
 
     assert "|" not in species
     assert "s__" in species
+
+
+def test_split_mpa_species_taxa_count_default(combined_mpa_file, tmp_path):
+    """combined_mpa_file has 3 species-level rows; Homo_sapiens is filtered by
+    default, leaving exactly 2 taxa in counts_species.txt."""
+    split_mpa(combined_mpa_file, tmp_path)
+    species_lines = (tmp_path / "txt" / "counts_species.txt").read_text().splitlines()
+
+    assert len(species_lines) == 2
+    assert {ln.split("\t")[0] for ln in species_lines} == {
+        "s__Pseudomonas_aeruginosa",
+        "s__Virus_alpha",
+    }
 
 
 def test_split_mpa_genus_file_excludes_species_lines(combined_mpa_file, tmp_path):
