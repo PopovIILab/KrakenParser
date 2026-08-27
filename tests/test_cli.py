@@ -10,6 +10,7 @@ test_integration.py and test_full_pipeline.py.
 """
 
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -18,6 +19,7 @@ from conftest import SAMPLE_MPA_A, SAMPLE_MPA_B
 from krakenparser.counts.convert2csv import app as convert2csv_app
 from krakenparser.counts.processing_script import app as processing_app
 from krakenparser.counts.split_mpa import app as split_mpa_app
+from krakenparser.krakenparser import app as root_app
 from krakenparser.mpa.mpa_table import app as mpa_table_app
 from krakenparser.mpa.transform2mpa import app as transform2mpa_app
 from krakenparser.pipeline import app as pipeline_app
@@ -190,3 +192,49 @@ def test_diversity_not_enough_samples_for_beta(runner, tmp_path):
 
     assert result.exit_code == 1
     assert "Error" in result.output
+
+
+# ---------------------------------------------------------------------------
+# --help must succeed everywhere, and our own CLI-facing text must be ASCII
+# (Windows CP1252 console regression — see JOSS review)
+# ---------------------------------------------------------------------------
+
+_ALL_APPS = [
+    root_app,
+    pipeline_app,
+    mpa_table_app,
+    transform2mpa_app,
+    convert2csv_app,
+    processing_app,
+    split_mpa_app,
+    relabund_app,
+    diversity_app,
+]
+
+
+@pytest.mark.parametrize("app", _ALL_APPS)
+def test_help_exits_cleanly(app, runner):
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+
+
+def test_source_has_no_non_ascii_cli_text():
+    """A Windows console using CP1252 crashed on a literal '➔' in a docstring.
+
+    Rich's own box-drawing help borders are handled safely by its terminal-encoding
+    detection, so this checks only the text *we* author (docstrings, option help=),
+    not Typer/Rich's rendering — a full CliRunner-output check would false-positive
+    on Rich's decorative unicode borders, which is not what actually crashed.
+    """
+    package_root = Path(__file__).resolve().parent.parent / "krakenparser"
+    offenders = []
+    for path in package_root.rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        for lineno, line in enumerate(text.splitlines(), start=1):
+            try:
+                line.encode("ascii")
+            except UnicodeEncodeError:
+                offenders.append(f"{path}:{lineno}: {line.strip()!r}")
+    assert not offenders, "Non-ASCII characters found in CLI source:\n" + "\n".join(
+        offenders
+    )
