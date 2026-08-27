@@ -246,7 +246,7 @@ def main(
         1000,
         "-d",
         "--depth",
-        help="Rarefaction depth for β-diversity.",
+        help="Rarefaction depth for beta-diversity.",
     ),
     seed: int | None = typer.Option(
         None,

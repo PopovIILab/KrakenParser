@@ -111,7 +111,7 @@ def main_callback(
         help="Show version and exit.",
     ),
     depth: int = typer.Option(
-        1000, "-d", "--depth", help="Rarefaction depth for β-diversity."
+        1000, "-d", "--depth", help="Rarefaction depth for beta-diversity."
     ),
     seed: int | None = typer.Option(
         None, "-s", "--seed", help="Random seed for reproducible rarefaction."
@@ -130,7 +130,7 @@ def main_callback(
 
     Alternatively, you can run specific parts of the pipeline manually in the following order:
 
-    mpa ➔ combine ➔ split ➔ process ➔ csv ➔ relabund ➔ diversity
+    mpa -> combine -> split -> process -> csv -> relabund -> diversity
 
     Each step behaves as an independent tool. Type 'krakenparser <command> --help' to see options for a specific step.
     """

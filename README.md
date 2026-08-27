@@ -44,11 +44,11 @@ This will:
 4. Process extracted text files
 5. Convert them into CSV format
 6. Calculate relative abundance
-7. Calculate α & β-diversities
+7. Calculate alpha & beta-diversities
 
 > [!TIP]
 > After the pipeline finishes, the output window will remind you about calibrating
-> rarefaction depth for β-diversity and re-running relative abundance normalization
+> rarefaction depth for beta-diversity and re-running relative abundance normalization
 > before visualization — with ready-to-paste example commands tailored to your output paths.
 
 #### Full help output
@@ -63,7 +63,7 @@ Usage: KrakenParser [OPTIONS] COMMAND [ARGS]...
  Alternatively, you can run specific parts of the pipeline manually in the      
  following order:                                                               
                                                                                 
- mpa ➔ combine ➔ split ➔ process ➔ csv ➔ relabund ➔ diversity                   
+ mpa -> combine -> split -> process -> csv -> relabund -> diversity             
                                                                                 
  Each step behaves as an independent tool. Type 'krakenparser <command> --help' 
  to see options for a specific step.                                            
@@ -82,7 +82,7 @@ Usage: KrakenParser [OPTIONS] COMMAND [ARGS]...
 │                                         the pipeline.                        │
 │ --keep-human  -keep-human               Do not filter human-related taxa.    │
 │ --version     -V                        Show version and exit.               │
-│ --depth       -d               INTEGER  Rarefaction depth for β-diversity.   │
+│ --depth       -d               INTEGER  Rarefaction depth for beta-diversity.│
 │                                         [default: 1000]                      │
 │ --seed        -s               INTEGER  Random seed for reproducible         │
 │                                         rarefaction.                         │
@@ -99,7 +99,7 @@ Usage: KrakenParser [OPTIONS] COMMAND [ARGS]...
 │ csv        Reads a TXT file, reorganizes the data, and converts it into a    │
 │            CSV file.                                                         │
 │ relabund   Calculates taxa relative abundance and saves it to a CSV file.    │
-│ diversity  Calculate α & β-diversities for microbial communities.            │
+│ diversity  Calculate alpha & beta-diversities for microbial communities.     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -186,7 +186,7 @@ KrakenParser relabund -i data/counts/counts_phylum.csv -o data/rel_abund/ra_phyl
 
 Groups all taxa with abundance < 3.5 % into `Other (<3.5%)`.
 
-### **Step 7: Calculate α & β-Diversities**
+### **Step 7: Calculate Alpha & Beta-Diversities**
 
 ```bash
 KrakenParser diversity -i data/counts/counts_species.csv -o data/diversity
@@ -244,7 +244,7 @@ X9,Bacillota,12.473649123439218
 X9,Other (<4.0%),1.8979510606688494
 ```
 
-### α-diversity output
+### Alpha-diversity output
 
 `alpha_div.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
@@ -257,7 +257,7 @@ X8,3.442077115880119,0.42753293021330063,4177.251358695652
 X9,4.033664950188261,0.5050385978575492,3492.16
 ```
 
-### β-diversity output
+### Beta-diversity output
 
 `beta_div_bray.csv` calculated from 9 kraken2 reports of metagenomic samples using `KrakenParser`:
 
@@ -328,6 +328,6 @@ results/
 
 KrakenParser provides a **simple and automated** way to convert Kraken2 reports into usable CSV files for downstream analysis. You can run the **full pipeline** with a single command or use **individual modules** as needed.
 
-For any issues or feature requests, feel free to open an issue on GitHub!
+For any issues, feature requests, or questions, see [SUPPORT.md](SUPPORT.md).
 
 🚀 Happy analyzing!
