@@ -8,6 +8,7 @@ over metagenomic report parsing, normalization, and statistical analysis.
 
 import logging
 import sys
+import warnings
 from importlib.metadata import PackageNotFoundError as _PNF
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
@@ -37,6 +38,11 @@ app: typer.Typer = typer.Typer(
 )
 
 PANEL_NAME: str = "Advanced (Step-by-step pipeline control)"
+
+# Suppress source file/line noise from warnings.warn(); show only the message text
+warnings.formatwarning = lambda message, category, filename, lineno, line=None: (
+    f"{message}\n"
+)
 
 # Register individual step subcommands under a isolated help panel
 app.add_typer(mpa_app, name="mpa", rich_help_panel=PANEL_NAME)
@@ -164,7 +170,7 @@ def main_callback(
                 seed=seed,
                 overwrite=overwrite,
             )
-        except (FileNotFoundError, FileExistsError) as e:
+        except (FileNotFoundError, FileExistsError, ValueError) as e:
             print(f"Error: {e}", file=sys.stderr)
             raise typer.Exit(code=1)
 
