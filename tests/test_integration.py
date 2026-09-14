@@ -138,6 +138,21 @@ def test_kreport_to_mpa_parses_bracken_report(bracken_kreport_file, tmp_path):
     assert "root" not in out.read_text()
 
 
+def test_kreport_to_mpa_skips_blank_and_commented_lines(kreport_file, tmp_path):
+    """Blank and '#'-commented lines must be skipped, not crash the unpack in
+    kreport_to_mpa (previously _parse_line returned [] but the caller checked
+    `is None`, so these lines fell through to a ValueError on unpacking)."""
+    noisy_report = kreport_file.with_name("noisy.kreport")
+    noisy_report.write_text("\n# a comment line\n   \n" + kreport_file.read_text())
+
+    clean_out = tmp_path / "clean.MPA.TXT"
+    noisy_out = tmp_path / "noisy.MPA.TXT"
+    kreport_to_mpa(kreport_file, clean_out)
+    kreport_to_mpa(noisy_report, noisy_out)
+
+    assert noisy_out.read_text() == clean_out.read_text()
+
+
 # ===========================================================================
 # convert_to_csv
 # ===========================================================================
@@ -409,6 +424,22 @@ def test_beta_div_creates_output_dir(counts_csv_file, tmp_path):
     out_dir = tmp_path / "new_dir" / "nested"
     calc_beta_div(df, out_dir, rarefaction_depth=1000, seed=42)
     assert (out_dir / "beta_div_bray.csv").exists()
+
+
+def test_beta_div_warns_on_excluded_samples(tmp_path):
+    """A sample below the rarefaction depth is dropped and must be named in a warning."""
+    df = pd.DataFrame(
+        {
+            "Taxon_A": [500, 500, 5],
+            "Taxon_B": [500, 500, 5],
+        },
+        index=pd.Index(["S1", "S2", "S3"], name="Sample_id"),
+    )
+    out_dir = tmp_path / "diversity"
+    out_dir.mkdir()
+
+    with pytest.warns(UserWarning, match="S3"):
+        calc_beta_div(df, out_dir, rarefaction_depth=1000, seed=0)
 
 
 # ===========================================================================
