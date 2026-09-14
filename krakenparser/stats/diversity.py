@@ -7,6 +7,7 @@ Bray-Curtis and Jaccard distance metrics for beta diversity analysis.
 
 import logging
 import sys
+import warnings
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, Any
@@ -166,21 +167,37 @@ def calc_beta_div(
 
     Raises:
         ValueError: Triggered if less than two samples fulfill the minimum rarefaction depth.
+
+    Warns:
+        UserWarning: Emitted naming every sample excluded for falling below
+            ``rarefaction_depth``, alongside its total read count.
     """
     out_path: Path = ensure_output_dir(output_path, is_file=False)
     rng: np.random.Generator = np.random.default_rng(seed)
     rarefied_counts: list[np.ndarray] = []
     sample_ids: list[str] = []
+    excluded_samples: dict[str, int] = {}
 
     # Filter cohorts and compress vectors to secure computational scaling equity
     for sample, row in df.iterrows():
         counts: np.ndarray = np.round(row.values).astype(int)
-        if counts.sum() >= rarefaction_depth:
+        total_reads: int = int(counts.sum())
+        if total_reads >= rarefaction_depth:
             rarefied: np.ndarray = _subsample_counts(
                 counts, n=rarefaction_depth, rng=rng
             )
             rarefied_counts.append(rarefied)
             sample_ids.append(str(sample))
+        else:
+            excluded_samples[str(sample)] = total_reads
+
+    if excluded_samples:
+        message: str = (
+            f"Samples excluded from beta-diversity (below rarefaction depth "
+            f"{rarefaction_depth}): {excluded_samples}"
+        )
+        warnings.warn(message, UserWarning, stacklevel=2)
+        _log.warning(message)
 
     if len(rarefied_counts) < 2:
         raise ValueError("Not enough samples passed the rarefaction threshold.")
