@@ -43,6 +43,10 @@ def _parse_line(line: str, remove_spaces: bool = False) -> list:
         list: A data list containing [cleaned_name, level_num, level_type, total_reads, relative_percentage]
             or an empty list [] if the line format violates parser syntactic assumptions.
     """
+    stripped_line: str = line.strip()
+    if not stripped_line or stripped_line.startswith("#"):
+        return []
+
     parts: list[str] = line.rstrip("\n").split("\t")
     if len(parts) < 4:
         return []
@@ -125,7 +129,7 @@ def kreport_to_mpa(
 
         for line in r_fh:
             report_vals = _parse_line(line, remove_spaces)
-            if report_vals is None:
+            if not report_vals:
                 continue
 
             name, level_num, level_type, all_reads, percents = report_vals
